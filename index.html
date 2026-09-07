@@ -230,8 +230,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 </script>
 <script src="class-data.js"></script>
 <script>
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 const CHANGELOG = [
+  {v:'1.2.1', d:'2026-09-07', n:['Class notes split into 20 lessons (even split, since the notes carry no dates)','A word marked known in HSK counts as known in Class, and vice versa','★ explained: teacher annotated the word 3+ times or it appears 6+ times in the notes']},
   {v:'1.2.0', d:'2026-09-07', n:['HSK / Class switch at the top','Class word wall built from 安摩西\'s notes: 607 words and phrases in Lessons 1–11 (1–7 estimated)','★ marks words repeated often in class, with a ★ Repeated filter','Notes tab: compiled class notes per lesson, pinyin above taught words, tap a word to open it','Class progress kept separately and included in Gist sync','Version number opens this history']},
   {v:'1.1.0', d:'2026-09-07', n:['Fixed 97 wrong definitions and readings (surname / variant entries such as 能, 和, 水, 看, 便宜)','Fixed ~50 character-by-character glosses','Version number shown in the footer']},
   {v:'1.0.1', d:'2026-09-07', n:['Sync across devices via a private GitHub Gist']},
@@ -250,23 +251,27 @@ const SETS = {
     label:l=>HSK_LVL[l], short:l=>HSK_LVL[l], anchor:l=>'lvl'+l,
   },
   cls: {
-    title:'课堂词汇', sub:'Class word wall · from 安摩西\'s notes', key:'hskwall.class.known.v1',
+    title:'课堂词汇', sub:'Class word wall · from 安摩西\'s notes · lessons are an even split of the notes · ★ = repeated often in class', key:'hskwall.class.known.v1',
     words: CD.words.map(e=>({w:e.w,p:e.p,l:e.l,d:[e.g?('Teacher: '+e.g):null,e.d].filter(Boolean),ex:e.x,i:e.i,h:e.h,n:e.n,a:e.a})),
     order: CD.lessons.map(l=>l.n),
-    label:l=>{const L=CD.lessons.find(x=>x.n===l);return 'Lesson '+l+(L&&L.est?' (estimated)':'');},
+    label:l=>'Lesson '+l,
     short:l=>'L'+l, anchor:l=>'les'+l,
   }
 };
 let MODE = localStorage.getItem('hskwall.mode')==='cls' && CD.words.length ? 'cls' : 'hsk';
 let S, known, byLvl, chips, cur=null, filter='all', view='words';
 
-const save = ()=>{ localStorage.setItem(S.key, JSON.stringify([...known])); if(typeof syncPush==='function') syncPush(); };
+const save = (w,val)=>{
+  localStorage.setItem(S.key, JSON.stringify([...known]));
+  if(w!==undefined){ const o=SETS[MODE==='hsk'?'cls':'hsk']; if(o.words.some(e=>e.w===w)){ const os=loadKnown(o.key); val?os.add(w):os.delete(w); localStorage.setItem(o.key, JSON.stringify([...os])); } }
+  if(typeof syncPush==='function') syncPush();
+};
 const loadKnown = key=>new Set(JSON.parse(localStorage.getItem(key)||'[]'));
 
 /* ---------- build wall ---------- */
 const main=$('main'), nav=$('lvlnav'), notesEl=$('notes');
 function build(){
-  S=SETS[MODE]; known=loadKnown(S.key); cur=null; closeSheet();
+  S=SETS[MODE]; known=loadKnown(S.key); const other=loadKnown(SETS[MODE==='hsk'?'cls':'hsk'].key); S.words.forEach(e=>{ if(other.has(e.w)) known.add(e.w); }); cur=null; closeSheet();
   document.title=(MODE==='cls'?'课堂词汇':'词汇墙')+' · HSK Word Wall';
   $('ttl').textContent=S.title; $('sub').textContent=S.sub;
   document.querySelectorAll('#modeseg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===MODE));
@@ -283,7 +288,7 @@ function build(){
     const g=document.createElement('div'); g.className='grid';
     list.forEach(e=>{
       const b=document.createElement('button'); b.className='chip'; b.dataset.i=e.i_;
-      b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="repeated often in class">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'');
+      b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="★ Repeated: the teacher annotated this word 3+ times or it appears 6+ times in the notes">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'');
       if(known.has(e.w)) b.classList.add('known');
       g.appendChild(b); chips[e.i_]=b;
     });
@@ -301,7 +306,7 @@ function buildNotes(){
   const hi=t=>{ let s=esc(t).replace(/(?:【[^】]+】)+/g,seq=>{ const parts=[...seq.matchAll(/【([^|]+)\|([^】]+)】/g)]; const w=parts.map(p=>p[1]).join(''); return `<span class="tw rb" data-w="${w}">`+parts.map(p=>`<ruby>${p[1]}<rt>${p[2]}</rt></ruby>`).join('')+`</span>`; }); return rx? s.replace(rx,(m,w,off,str)=>{ const before=str.slice(0,off); const open=before.lastIndexOf('<span'), close=before.lastIndexOf('</span>'); return open>close? m : '<b class="tw" data-w="'+w+'">'+w+'</b>'; }):s; };
   notesEl.innerHTML=CD.lessons.map(L=>{
     const rows=(CD.notes[String(L.n)]||[]);
-    return `<section id="nl${L.n}"><div class="lvlhead"><h2>Lesson ${L.n}${L.est?' <small>(estimated split)</small>':''}</h2><span class="count">${L.words} words · ${rows.length} lines</span></div>`+
+    return `<section id="nl${L.n}"><div class="lvlhead"><h2>Lesson ${L.n}</h2><span class="count">${L.words} words · ${rows.length} lines</span></div>`+
       `<div class="notebody">`+rows.map(r=>`<p class="nline">${r.img?`<img src="${r.img}" alt="note image">`:''}${r.imgnote?`<em>${r.imgnote}</em>`:''}${hi(r.t)}</p>`).join('')+`</div></section>`;
   }).join('');
   // notes lines that contain ruby but our regex replaced inside ruby; keep simple: ruby text is already hanzi so highlighting still fine.
@@ -362,7 +367,7 @@ $('dx').addEventListener('click',ev=>{ const b=ev.target.closest('button[data-w]
 $('toggleKnown').onclick=()=>{
   if(!cur) return;
   if(known.has(cur.w)) known.delete(cur.w); else known.add(cur.w);
-  save();
+  save(cur.w, known.has(cur.w));
   chips[cur.i_].classList.toggle('known', known.has(cur.w));
   $('dw').classList.toggle('knownw', known.has(cur.w));
   $('toggleKnown').textContent = known.has(cur.w) ? 'Still learning ↺' : 'I know this ✓';
@@ -420,7 +425,7 @@ $('imp').addEventListener('change',ev=>{
   });
 });
 $('reset').onclick=()=>{
-  if(confirm(`Clear all known-word marks for ${S.sub}?`)){ known.clear(); save(); S.words.forEach(e=>chips[e.i_].classList.remove('known')); refresh(true); }
+  if(confirm(`Clear all known-word marks for ${S.sub}?`)){ const ws=[...known]; known.clear(); localStorage.setItem(S.key,'[]'); const o=SETS[MODE==='hsk'?'cls':'hsk']; const os=loadKnown(o.key); ws.forEach(w=>os.delete(w)); localStorage.setItem(o.key, JSON.stringify([...os])); syncPush(); S.words.forEach(e=>chips[e.i_].classList.remove('known')); refresh(true); }
 };
 
 /* ---------- GitHub Gist sync ---------- */
