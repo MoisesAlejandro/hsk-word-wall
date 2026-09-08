@@ -151,10 +151,11 @@
   #fw{position:absolute; inset:0; width:100%; height:100%; display:none; touch-action:none}
   #fw.on{display:block}
   #fw polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
-  #fwmodel{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:72%; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
+  #fwmodel{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
   #fwmodel.on{display:flex}
   .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
   .fwbar.on{display:flex}
+  #fwghost{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action:none}
   .fwbar label{font-size:13px; color:var(--ink2); display:flex; align-items:center; gap:4px}
   .gal{display:none; margin-top:14px}
   .gal.on{display:block}
@@ -256,7 +257,7 @@
       <button id="pnext" style="margin-left:auto">Next character →</button>
     </div>
     <div class="tian"><svg class="g" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><div id="hw"></div><div id="fwmodel"></div><svg id="fw" viewBox="0 0 1000 1000"></svg></div>
-    <div class="fwbar" id="fwbar"><button class="btn ghost" id="fwundo">↶ Undo stroke</button><button class="btn ghost" id="fwclear">Clear</button><button class="btn" id="fwsave">💾 Save &amp; next</button><label><input type="checkbox" id="fwghost"> Show faint model</label></div>
+    <div class="fwbar" id="fwbar"><button class="btn ghost" id="fwundo">↶ Undo stroke</button><button class="btn ghost" id="fwclear">Clear</button><button class="btn" id="fwsave">💾 Save &amp; next</button><button class="btn ghost" id="fwghost" type="button">👁 Hold to see model</button></div>
     <div class="pstat"><span id="pchk1">Stroke <b id="pstroke">0</b> / <b id="ptotal">0</b></span><span id="pchk2">Mistakes <b id="pmiss">0</b></span><span id="phint" style="color:var(--seal)"></span></div>
     <div class="reps" id="preps"></div>
     <div class="gal" id="gal"><div class="galh"><span>My <b id="galc"></b> · <b id="galn">0</b> saved · last 10 kept</span><button class="linklike" id="galclear">Clear all</button></div><div class="galgrid" id="galgrid"></div></div>
@@ -301,8 +302,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="hanzi-writer.min.js"></script>
 <script src="strokes-data.js"></script>
 <script>
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const CHANGELOG = [
+  {v:'1.4.1', d:'2026-09-07', n:['Free write: faint model is now full size and shows only while you hold the 👁 button']},
   {v:'1.4.0', d:'2026-09-07', n:['Free write mode: blank grid, no checking; Save & next stores your writing and clears the grid','Gallery of your last 10 attempts per character next to the printed model, with dates; tap to enlarge, × to delete','Optional faint model behind the grid (off by default)','Free writes and practice counts now sync through the Gist too']},
   {v:'1.3.0', d:'2026-09-07', n:['✍ Practice writing: tap a word, then Practice writing to draw each character stroke by stroke (田字格 grid, Watch / Trace / Write from memory)','Stroke checking and stroke-order animation via Hanzi Writer; stroke data for all 830 characters bundled so it works offline','Five correct writes per character are tracked on this device']},
   {v:'1.2.1', d:'2026-09-07', n:['Class notes split into 20 lessons (even split, since the notes carry no dates)','A word marked known in HSK counts as known in Class, and vice versa','★ explained: teacher annotated the word 3+ times or it appears 6+ times in the notes']},
@@ -595,7 +597,7 @@ function loadChar(){
     strokeAnimationSpeed:1, delayBetweenStrokes:250, highlightColor:'#e05a52',
     charDataLoader:(ch,done)=>{ if(HWD[ch]) done(HWD[ch]); else fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(ch)+'.json').then(r=>r.json()).then(done).catch(()=>$('phint').textContent='No stroke data for '+ch); }});
   $('ptotal').textContent=HWD[c]?HWD[c].strokes.length:'?'; $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
-  drawReps(c); $('fwmodel').textContent=c; drawGal(c); fwReset(); runMode();
+  drawReps(c); $('fwmodel').textContent=c; $('fwmodel').style.fontSize=Math.round(size*0.8)+'px'; drawGal(c); fwReset(); runMode();
 }
 function drawReps(c){ const n=preps[c]||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
 function runMode(){
@@ -603,7 +605,7 @@ function runMode(){
   if(!writer) return; writer.cancelQuiz(); $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
   const free=pmode==='free';
   fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); $('gal').classList.toggle('on',free); $('preps').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
-  $('fwmodel').classList.toggle('on', free && $('fwghost').checked);
+  $('fwmodel').classList.remove('on');
   if(free){ writer.hideCharacter(); writer.hideOutline(); return; }
   if(pmode==='watch'){ writer.showOutline(); writer.showCharacter(); writer.animateCharacter(); return; }
   const trace=pmode==='trace';
@@ -631,7 +633,10 @@ fwEl.addEventListener('pointerup',fwEnd); fwEl.addEventListener('pointercancel',
 function fwReset(){ fwStrokes=[]; fwCur=null; fwEl.innerHTML=''; }
 $('fwundo').onclick=()=>{ fwStrokes.pop(); if(fwEl.lastChild) fwEl.removeChild(fwEl.lastChild); };
 $('fwclear').onclick=fwReset;
-$('fwghost').onchange=()=>$('fwmodel').classList.toggle('on',$('fwghost').checked);
+const ghostOn=ev=>{ ev.preventDefault(); $('fwmodel').classList.add('on'); }, ghostOff=()=>$('fwmodel').classList.remove('on');
+$('fwghost').addEventListener('pointerdown',ghostOn);
+['pointerup','pointercancel','pointerleave'].forEach(t=>$('fwghost').addEventListener(t,ghostOff));
+$('fwghost').addEventListener('contextmenu',ev=>ev.preventDefault());
 $('fwsave').onclick=()=>{
   if(!fwStrokes.length){ $('phint').textContent='Nothing to save yet.'; return; }
   const c=pchars[pidx]; (fws[c]=fws[c]||[]).push({d:fwStrokes,t:Date.now()}); if(fws[c].length>10) fws[c]=fws[c].slice(-10);
