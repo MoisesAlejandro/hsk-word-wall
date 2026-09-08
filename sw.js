@@ -1,5 +1,5 @@
-// HSK word wall v1.3.0
-const C = 'hskwall-v6';
+// HSK word wall v1.4.0
+const C = 'hskwall-v7';
 const ASSETS = ['./', './index.html', './manifest.json', './class-data.js', './hanzi-writer.min.js', './strokes-data.js', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

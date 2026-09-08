@@ -148,6 +148,30 @@
   .reps{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:6px}
   .reps span{width:34px; height:34px; border:1px solid var(--rule); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--faint)}
   .reps span.ok{color:var(--seal); border-color:var(--seal)}
+  #fw{position:absolute; inset:0; width:100%; height:100%; display:none; touch-action:none}
+  #fw.on{display:block}
+  #fw polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
+  #fwmodel{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:72%; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
+  #fwmodel.on{display:flex}
+  .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
+  .fwbar.on{display:flex}
+  .fwbar label{font-size:13px; color:var(--ink2); display:flex; align-items:center; gap:4px}
+  .gal{display:none; margin-top:14px}
+  .gal.on{display:block}
+  .galh{display:flex; justify-content:space-between; align-items:baseline; font-size:13px; color:var(--ink2)}
+  .galh b{color:var(--ink)}
+  .galgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:6px; margin-top:6px}
+  .galcell{aspect-ratio:1; border:1px solid var(--rule); border-radius:4px; background:var(--panel); position:relative; cursor:pointer; overflow:hidden}
+  .galcell svg{width:100%; height:100%; display:block}
+  .galcell polyline{fill:none; stroke:#2b5fb8; stroke-width:40; stroke-linecap:round; stroke-linejoin:round}
+  .galcell small{position:absolute; bottom:1px; right:3px; font-size:9px; color:var(--faint)}
+  .galcell.model{display:flex; align-items:center; justify-content:center; font-size:38px; border-color:var(--ink); font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif}
+  .galcell.empty{display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:12px; cursor:default}
+  .galcell .del{position:absolute; top:0; right:0; width:18px; height:18px; background:var(--ink); color:var(--paper); font-size:11px; display:flex; align-items:center; justify-content:center; border-radius:0 0 0 6px}
+  #galbig{border:1px solid var(--rule); border-radius:12px; background:var(--panel); padding:12px; max-width:min(92vw,520px)}
+  #galbig::backdrop{background:rgba(0,0,0,.45)}
+  #galbig svg{width:min(80vw,440px); height:min(80vw,440px); display:block; border:2px solid #2e9e5b; border-radius:6px}
+  #galbig polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
   .pinfo{font-size:13px; color:var(--ink2); text-align:center; margin-top:14px}
   @media (max-width:600px){
     .bigword{font-size:34px}
@@ -228,12 +252,16 @@
       <button data-m="watch" aria-pressed="true">▶ Watch</button>
       <button data-m="trace" aria-pressed="false">Trace</button>
       <button data-m="write" aria-pressed="false">Write from memory</button>
+      <button data-m="free" aria-pressed="false">Free write</button>
       <button id="pnext" style="margin-left:auto">Next character →</button>
     </div>
-    <div class="tian"><svg class="g" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><div id="hw"></div></div>
-    <div class="pstat"><span>Stroke <b id="pstroke">0</b> / <b id="ptotal">0</b></span><span>Mistakes <b id="pmiss">0</b></span><span id="phint" style="color:var(--seal)"></span></div>
+    <div class="tian"><svg class="g" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><div id="hw"></div><div id="fwmodel"></div><svg id="fw" viewBox="0 0 1000 1000"></svg></div>
+    <div class="fwbar" id="fwbar"><button class="btn ghost" id="fwundo">↶ Undo stroke</button><button class="btn ghost" id="fwclear">Clear</button><button class="btn" id="fwsave">💾 Save &amp; next</button><label><input type="checkbox" id="fwghost"> Show faint model</label></div>
+    <div class="pstat"><span id="pchk1">Stroke <b id="pstroke">0</b> / <b id="ptotal">0</b></span><span id="pchk2">Mistakes <b id="pmiss">0</b></span><span id="phint" style="color:var(--seal)"></span></div>
     <div class="reps" id="preps"></div>
-    <p class="pinfo">Draw each stroke in order with your finger or pen. Watch shows the stroke order; Trace shows a faint outline to follow; Write hides everything. Five correct writes per character are counted, and progress is saved in this browser only.</p>
+    <div class="gal" id="gal"><div class="galh"><span>My <b id="galc"></b> · <b id="galn">0</b> saved · last 10 kept</span><button class="linklike" id="galclear">Clear all</button></div><div class="galgrid" id="galgrid"></div></div>
+    <dialog id="galbig"><div id="galbigin"></div><div class="actions" style="margin-top:8px"><span id="galbigd" class="exh"></span><button class="btn ghost" type="button" id="galbigclose" style="margin-left:auto">Close</button></div></dialog>
+    <p class="pinfo">Watch shows the stroke order; Trace shows a faint outline and checks each stroke; Write from memory hides everything and checks each stroke (five correct writes fill the boxes). Free write is a blank grid with no checking: write, Save &amp; next, and your last 10 attempts stay below so you can see your progress.</p>
   </div>
 </div>
 <footer><div class="footin">
@@ -273,8 +301,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="hanzi-writer.min.js"></script>
 <script src="strokes-data.js"></script>
 <script>
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const CHANGELOG = [
+  {v:'1.4.0', d:'2026-09-07', n:['Free write mode: blank grid, no checking; Save & next stores your writing and clears the grid','Gallery of your last 10 attempts per character next to the printed model, with dates; tap to enlarge, × to delete','Optional faint model behind the grid (off by default)','Free writes and practice counts now sync through the Gist too']},
   {v:'1.3.0', d:'2026-09-07', n:['✍ Practice writing: tap a word, then Practice writing to draw each character stroke by stroke (田字格 grid, Watch / Trace / Write from memory)','Stroke checking and stroke-order animation via Hanzi Writer; stroke data for all 830 characters bundled so it works offline','Five correct writes per character are tracked on this device']},
   {v:'1.2.1', d:'2026-09-07', n:['Class notes split into 20 lessons (even split, since the notes carry no dates)','A word marked known in HSK counts as known in Class, and vice versa','★ explained: teacher annotated the word 3+ times or it appears 6+ times in the notes']},
   {v:'1.2.0', d:'2026-09-07', n:['HSK / Class switch at the top','Class word wall built from 安摩西\'s notes: 607 words and phrases in Lessons 1–11 (1–7 estimated)','★ marks words repeated often in class, with a ★ Repeated filter','Notes tab: compiled class notes per lesson, pinyin above taught words, tap a word to open it','Class progress kept separately and included in Gist sync','Version number opens this history']},
@@ -477,7 +506,7 @@ const TKEY='hskwall.gist.token', GKEY='hskwall.gist.id', DKEY='hskwall.gist.dirt
 const gtok=()=>localStorage.getItem(TKEY)||'';
 const gstat=(t,err)=>{ const el=$('syncstat'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
 const gmsg=(t,err)=>{ const el=$('syncmsg'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
-const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],updated:Date.now()});
+const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],fw:JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}'),reps:JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}'),updated:Date.now()});
 async function gh(path,opt={}){
   const r=await fetch('https://api.github.com'+path,{...opt,headers:{'Authorization':'Bearer '+gtok(),'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});
   if(!r.ok){ const e=new Error('GitHub '+r.status); e.status=r.status; throw e; }
@@ -491,6 +520,13 @@ async function findGist(){
   if(g){ localStorage.setItem(GKEY,g.id); return g.id; }
   const made=await gh('/gists',{method:'POST',body:JSON.stringify({description:'HSK word wall progress',public:false,files:{[FNAME]:{content:payload()}}})});
   localStorage.setItem(GKEY,made.id); return made.id;
+}
+function applyExtras(data){
+  if(data.fw && typeof data.fw==='object'){ const loc=JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}');
+    for(const c in data.fw){ const seen=new Set((loc[c]||[]).map(a=>a.t)); loc[c]=[...(loc[c]||[]),...data.fw[c].filter(a=>!seen.has(a.t))].sort((a,b)=>a.t-b.t).slice(-10); }
+    localStorage.setItem('hskwall.freewrite.v1',JSON.stringify(loc)); if(typeof fws!=='undefined') fws=loc; }
+  if(data.reps && typeof data.reps==='object'){ const loc=JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}');
+    for(const c in data.reps) loc[c]=Math.max(loc[c]||0,data.reps[c]); localStorage.setItem('hskwall.practice.v1',JSON.stringify(loc)); if(typeof preps!=='undefined') preps=loc; }
 }
 function applyRemote(hskArr, clsArr, merge){
   const mix=(key,arr)=>{ const loc=loadKnown(key); const set=merge?new Set([...arr,...loc]):new Set(arr); localStorage.setItem(key,JSON.stringify([...set])); };
@@ -516,7 +552,7 @@ async function doPull(firstLink){
     const id=await findGist(); const g=await gh('/gists/'+id); const f=g.files[FNAME]; let data={known:[]};
     try{ data=JSON.parse(f.truncated ? await (await fetch(f.raw_url)).text() : f.content); }catch(_){}
     const hskArr=Array.isArray(data)?data:(data.known||[]), clsArr=Array.isArray(data)?[]:(data.cls||[]);
-    applyRemote(hskArr, clsArr, firstLink);
+    applyExtras(data); applyRemote(hskArr, clsArr, firstLink);
     if(firstLink) await doPush(); else gstat('Synced '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}));
   }catch(e){ gstat(e.status===401?'Sync: token invalid or expired':(navigator.onLine?'Sync failed ('+e.message+')':'Offline'),true); }
 }
@@ -559,12 +595,16 @@ function loadChar(){
     strokeAnimationSpeed:1, delayBetweenStrokes:250, highlightColor:'#e05a52',
     charDataLoader:(ch,done)=>{ if(HWD[ch]) done(HWD[ch]); else fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(ch)+'.json').then(r=>r.json()).then(done).catch(()=>$('phint').textContent='No stroke data for '+ch); }});
   $('ptotal').textContent=HWD[c]?HWD[c].strokes.length:'?'; $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
-  drawReps(c); runMode();
+  drawReps(c); $('fwmodel').textContent=c; drawGal(c); fwReset(); runMode();
 }
 function drawReps(c){ const n=preps[c]||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
 function runMode(){
   document.querySelectorAll('#pmodes button[data-m]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===pmode));
   if(!writer) return; writer.cancelQuiz(); $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
+  const free=pmode==='free';
+  fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); $('gal').classList.toggle('on',free); $('preps').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
+  $('fwmodel').classList.toggle('on', free && $('fwghost').checked);
+  if(free){ writer.hideCharacter(); writer.hideOutline(); return; }
   if(pmode==='watch'){ writer.showOutline(); writer.showCharacter(); writer.animateCharacter(); return; }
   const trace=pmode==='trace';
   writer.hideCharacter(); if(trace) writer.showOutline(); else writer.hideOutline();
@@ -576,6 +616,42 @@ function runMode(){
   });
 }
 $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice(); });
+
+/* ---------- free write ---------- */
+const FKEY='hskwall.freewrite.v1';
+let fws=JSON.parse(localStorage.getItem(FKEY)||'{}'); // {char:[{d:[[x,y,x,y..]..],t:ms}]}
+let fwStrokes=[], fwCur=null;
+const fwEl=$('fw');
+const fwSave=()=>{ localStorage.setItem(FKEY,JSON.stringify(fws)); syncPush(); };
+function fwPt(ev){ const r=fwEl.getBoundingClientRect(); return [Math.round((ev.clientX-r.left)/r.width*1000), Math.round((ev.clientY-r.top)/r.height*1000)]; }
+fwEl.addEventListener('pointerdown',ev=>{ if(pmode!=='free') return; ev.preventDefault(); fwEl.setPointerCapture(ev.pointerId); fwCur=document.createElementNS('http://www.w3.org/2000/svg','polyline'); fwCur._pts=fwPt(ev); fwCur.setAttribute('points',fwCur._pts.join(',')); fwEl.appendChild(fwCur); });
+fwEl.addEventListener('pointermove',ev=>{ if(!fwCur) return; ev.preventDefault(); const p=fwPt(ev); fwCur._pts.push(...p); fwCur.setAttribute('points',fwCur._pts.join(',')); });
+const fwEnd=ev=>{ if(!fwCur) return; if(fwCur._pts.length<4) fwCur._pts.push(fwCur._pts[0]+1,fwCur._pts[1]+1), fwCur.setAttribute('points',fwCur._pts.join(',')); fwStrokes.push(fwCur._pts); fwCur=null; };
+fwEl.addEventListener('pointerup',fwEnd); fwEl.addEventListener('pointercancel',fwEnd);
+function fwReset(){ fwStrokes=[]; fwCur=null; fwEl.innerHTML=''; }
+$('fwundo').onclick=()=>{ fwStrokes.pop(); if(fwEl.lastChild) fwEl.removeChild(fwEl.lastChild); };
+$('fwclear').onclick=fwReset;
+$('fwghost').onchange=()=>$('fwmodel').classList.toggle('on',$('fwghost').checked);
+$('fwsave').onclick=()=>{
+  if(!fwStrokes.length){ $('phint').textContent='Nothing to save yet.'; return; }
+  const c=pchars[pidx]; (fws[c]=fws[c]||[]).push({d:fwStrokes,t:Date.now()}); if(fws[c].length>10) fws[c]=fws[c].slice(-10);
+  fwSave(); fwReset(); drawGal(c); $('phint').textContent='Saved · attempt '+fws[c].length+' of 10';
+};
+const svgOf=(att,cls)=>`<svg viewBox="0 0 1000 1000">${att.d.map(p=>`<polyline points="${p.join(',')}"/>`).join('')}</svg>`;
+const fmtD=t=>{ const d=new Date(t), now=new Date(); return d.toDateString()===now.toDateString()?'today':d.toLocaleDateString([], {month:'short',day:'numeric'}); };
+function drawGal(c){
+  const list=fws[c]||[]; $('galc').textContent=c; $('galn').textContent=list.length;
+  $('galgrid').innerHTML=`<div class="galcell model">${c}</div>`+list.map((a,i)=>`<div class="galcell" data-i="${i}">${svgOf(a)}<small>${fmtD(a.t)}</small><span class="del" data-del="${i}" title="Delete">×</span></div>`).join('')+
+    Array.from({length:Math.max(0,10-list.length)},(_,i)=>`<div class="galcell empty">${list.length+i+1}</div>`).join('');
+}
+$('galgrid').addEventListener('click',ev=>{
+  const c=pchars[pidx]; const del=ev.target.closest('[data-del]');
+  if(del){ fws[c].splice(+del.dataset.del,1); if(!fws[c].length) delete fws[c]; fwSave(); drawGal(c); return; }
+  const cell=ev.target.closest('.galcell[data-i]'); if(!cell) return;
+  const a=fws[c][+cell.dataset.i]; $('galbigin').innerHTML=svgOf(a); $('galbigd').textContent=c+' · '+new Date(a.t).toLocaleString(); $('galbig').showModal();
+});
+$('galbigclose').onclick=()=>$('galbig').close();
+$('galclear').onclick=()=>{ const c=pchars[pidx]; if(fws[c] && confirm('Delete all saved writings of '+c+'?')){ delete fws[c]; fwSave(); drawGal(c); } };
 
 /* ---------- start ---------- */
 build(); doPull(false);
