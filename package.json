@@ -1,0 +1,17 @@
+{
+  "name": "hanzi-practice",
+  "version": "1.7.0",
+  "private": true,
+  "description": "Hanzi Practice - Chinese vocabulary and handwriting PWA",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "sync": "npm run build && cap sync",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
+  }
+}

@@ -1,1 +1,25 @@
+# Private course vocabulary - never ship in public or store builds
 class-data.js
+
+# Capacitor build output
+dist/
+node_modules/
+
+# Android build artifacts
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+android/captured-*.png
+
+# Signing keys - never commit
+*.keystore
+*.jks
+keystore.properties
+key.properties
+*.p12
+*.pepk
+
+# Claude Code local config
+.claude/
