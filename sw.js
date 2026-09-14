@@ -1,5 +1,5 @@
-// Hanzi Practice v1.6.0
-const C = 'hskwall-v13';
+// Hanzi Practice v1.7.0
+const C = 'hskwall-v14';
 const ASSETS = ['./', './index.html', './manifest.json', './hanzi-writer.min.js', './strokes-data.js', './examples.js', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -25,7 +25,7 @@ self.addEventListener('periodicsync', e => {
         const now = new Date(), [h, m] = st.time.split(':').map(Number); const due = new Date(); due.setHours(h, m, 0, 0);
         const key = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
         if (now < due || st.last === key) return;
-        return self.registration.showNotification('词汇墙 · daily goal', {body: (st.goal - st.today) + " more to reach today's goal. Tap to practice.", icon: 'icon-192.png', tag: 'hsk-goal'});
+        return self.registration.showNotification('Hanzi Practice · daily goal', {body: (st.goal - st.today) + " more to reach today's goal. Tap to practice.", icon: 'icon-192.png', tag: 'hsk-goal'});
       });
   }));
 });

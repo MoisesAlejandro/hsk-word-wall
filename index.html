@@ -13,10 +13,20 @@
     --paper:#fbfbf7; --panel:#ffffff; --ink:#1b1d21; --ink2:#5c6167; --faint:#a7abb1;
     --rule:#e4e3dc; --seal:#c3272b; --seal-soft:#f6e3e2; --focus:#2b5fb8;
     --chip-r:6px;
+    --py:#c3272b; --known:#fbe9e9; --guide:#2e9e5b; --outline:#c9c9c9; --draw:#2b5fb8; --ok:#2e9e5b;
+    --tabh:calc(56px + env(safe-area-inset-bottom));
+  }
+  :root[data-theme=dark]{
+    --paper:#1c1b18; --panel:#24231f; --ink:#eae7dd; --ink2:#9a968c; --faint:#6f6b62;
+    --rule:#2e2c27; --seal:#c3272b; --seal-soft:#3a2422; --focus:#6f9bea;
+    --py:#e0575a; --known:#33211f; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --paper:#17181a; --panel:#202225; --ink:#eceae4; --ink2:#a3a7ad; --faint:#6b7076;
-           --rule:#33363a; --seal:#e05a52; --seal-soft:#3a2422; }
+    :root:not([data-theme=light]){
+      --paper:#1c1b18; --panel:#24231f; --ink:#eae7dd; --ink2:#9a968c; --faint:#6f6b62;
+      --rule:#2e2c27; --seal:#c3272b; --seal-soft:#3a2422; --focus:#6f9bea;
+      --py:#e0575a; --known:#33211f; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
+    }
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -117,13 +127,11 @@
   .mdbg{font-size:13px; color:var(--ink2); margin-left:auto}
   .mdbg a{color:inherit}
   #closer{position:absolute; top:10px; right:14px; border:0; background:none; font-size:22px; color:var(--ink2); cursor:pointer}
-  footer{border-top:1px solid var(--rule); margin-top:40px; padding:14px 16px; color:var(--ink2); font-size:13px}
-  .footin{max-width:1200px; margin:0 auto; display:flex; gap:14px; flex-wrap:wrap; align-items:center}
   .linklike{border:0; background:none; color:var(--ink2); text-decoration:underline; cursor:pointer; font-size:13px; padding:0}
   .attrib{margin-top:10px; gap:14px; font-size:12px; color:var(--faint)}
   .attrib a{color:var(--faint); text-decoration:underline}
-  #syncdlg,#verdlg,#statsdlg{border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); padding:0; max-width:460px; width:calc(100% - 32px)}
-  #syncdlg::backdrop,#verdlg::backdrop,#statsdlg::backdrop{background:rgba(0,0,0,.35)}
+  #syncdlg,#verdlg,#helpdlg{border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); padding:0; max-width:460px; width:calc(100% - 32px)}
+  #syncdlg::backdrop,#verdlg::backdrop,#helpdlg::backdrop{background:rgba(0,0,0,.35)}
   .syncin{padding:18px 20px}
   .vh{margin:0 0 10px; padding-bottom:8px; border-bottom:1px dashed var(--rule)} .vh:last-child{border:0}
   .vh b{font-size:15px} .vh .vd{color:var(--ink2); font-size:12px; margin-left:8px} .vh ul{margin:4px 0 0; padding-left:18px; font-size:13px; color:var(--ink)}
@@ -189,7 +197,6 @@
   #pentog{margin-left:auto}
   #pentog[aria-pressed=true]{background:var(--ink); border-color:var(--ink); color:var(--paper)}
   /* stats */
-  #statsdlg{max-width:560px}
   .srow{display:flex; gap:12px; flex-wrap:wrap; margin:10px 0}
   .stile{flex:1; min-width:110px; border:1px solid var(--rule); border-radius:10px; padding:10px 12px; background:var(--paper)}
   .stile b{display:block; font-size:24px; line-height:1.1} .stile span{font-size:12px; color:var(--ink2)}
@@ -202,8 +209,6 @@
   .heat i.today{outline:2px solid var(--ink); outline-offset:-1px}
   .sset{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0}
   .sset input[type=number],.sset input[type=time]{padding:5px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--paper); color:var(--ink); font-size:14px; width:90px}
-  .goalbadge{font-size:12px; color:var(--ink2); border:1px solid var(--rule); border-radius:12px; padding:2px 8px; cursor:pointer; background:var(--panel)}
-  .goalbadge.met{border-color:#2e9e5b; color:#2e9e5b}
   .exlist{list-style:none; margin:4px 0 0; padding:0}
   .exlist li{padding:6px 0; border-bottom:1px dashed var(--rule); display:grid; gap:1px}
   .exlist li:last-child{border-bottom:0}
@@ -230,6 +235,153 @@
   .tw.rb{border-bottom:2px solid var(--seal)}
   ruby rt{font-size:9px; color:var(--ink2)}
   mark{background:var(--seal-soft); color:inherit; padding:0 2px; border-radius:3px}
+
+  /* ===== v1.7 design pass ===== */
+  /* A. header */
+  header{padding:8px 16px 0}
+  .bar{align-items:center; gap:10px}
+  h1{font-size:18px; white-space:nowrap}
+  h1 small{display:block; margin:1px 0 0; font-size:11px}
+  .progress{min-width:120px}
+  .controls{margin:8px 0; gap:8px}
+  .lvlnav{
+    display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    margin:0 -16px; padding:0 16px 8px; -webkit-overflow-scrolling:touch;
+  }
+  .lvlnav::-webkit-scrollbar{display:none}
+  .lvlnav a{white-space:nowrap; min-height:34px; display:flex; align-items:center; font-size:13px; padding:4px 10px}
+  main{padding-bottom:calc(var(--tabh) + 24px)}
+  /* D. views + tab bar */
+  .view{max-width:760px; margin:0 auto; padding:14px 16px calc(var(--tabh) + 32px)}
+  .vhd{margin:4px 0 14px; font-size:20px}
+  .cards{display:grid; gap:10px}
+  .card{
+    text-align:left; display:grid; gap:3px; border:1px solid var(--rule); border-radius:12px;
+    background:var(--panel); color:var(--ink); padding:14px 16px; cursor:pointer; min-height:64px;
+  }
+  .card b{font-size:16px}
+  .card span{font-size:13px; color:var(--ink2)}
+  .card[disabled]{opacity:.5; cursor:default}
+  .sgrp{border-top:1px solid var(--rule); padding:12px 0 4px; margin:0}
+  .sgrp:first-of-type{border-top:0}
+  .sgrp h3{margin:0 0 6px; font-size:14px; color:var(--ink2); font-weight:600}
+  #themeseg{width:max-content; max-width:100%}
+  .sgrp summary{font-size:14px; color:var(--ink2); font-weight:600; cursor:pointer; min-height:32px}
+  .srowlab{display:flex; gap:10px; align-items:flex-start; font-size:14px; min-height:44px; padding:6px 0}
+  .srowlab input{width:20px; height:20px; margin-top:2px; accent-color:var(--seal)}
+  #tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex;
+    background:var(--panel); border-top:1px solid var(--rule);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #tabbar button{
+    flex:1; border:0; background:none; color:var(--ink2); cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    height:56px; font-size:11px; position:relative;
+  }
+  #tabbar button .ti{font-size:19px; line-height:1}
+  #tabbar button[aria-selected=true]{color:var(--seal)}
+  #tabbar button:focus-visible{outline:2px solid var(--focus); outline-offset:-3px}
+  #goalbadge{
+    position:absolute; top:5px; left:50%; margin-left:6px; font-size:10px; line-height:1;
+    background:var(--rule); color:var(--ink2); border-radius:9px; padding:2px 5px; font-variant-numeric:tabular-nums;
+  }
+  #goalbadge.met{background:var(--ok); color:#fff}
+  /* B. word sheet */
+  #sheet{z-index:60; max-height:82vh; border-radius:16px 16px 0 0; padding-bottom:env(safe-area-inset-bottom); display:flex; flex-direction:column; overflow:hidden}
+  .sheet-scroll{overflow:auto; -webkit-overflow-scrolling:touch}
+  .sheet-in{padding:6px 20px 16px; position:relative}
+  .grab{width:40px; height:4px; border-radius:2px; background:var(--rule); margin:8px auto 4px}
+  #closer{position:absolute; top:0; right:8px; width:44px; height:44px; font-size:24px; display:flex; align-items:center; justify-content:center; border-radius:8px}
+  .sheet-top{padding-right:48px}
+  .bigword{font-size:56px; line-height:1.1}
+  .bigword.knownw{text-decoration:none; color:var(--ink)}
+  .pyrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:4px 0 0}
+  .py{font-size:20px; color:var(--py)}
+  .lvltag{margin-left:0}
+  .defs li.more{display:none}
+  .defs.all li.more{display:block}
+  #dmore{margin-top:6px}
+  .sheetbar{
+    display:flex; gap:10px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--rule); background:var(--panel); flex:none;
+  }
+  .sheetbar .btn{flex:1; min-height:48px}
+  .btn{min-height:44px}
+  .btn.primary{background:var(--seal); border-color:var(--seal); color:#fff}
+  .btn.on{background:var(--ink); border-color:var(--ink); color:var(--paper)}
+  .mdbg{margin:14px 0 0; display:block; font-size:13px; color:var(--ink2)}
+  @media (min-width:700px){
+    #sheet{
+      left:50%; right:auto; bottom:auto; top:50%; width:560px; max-width:calc(100% - 32px);
+      border-radius:16px; border:1px solid var(--rule); max-height:80vh;
+      transform:translate(-50%,-46%) scale(.98); opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
+    }
+    #sheet.open{transform:translate(-50%,-50%); opacity:1; pointer-events:auto}
+    .grab{display:none}
+  }
+  /* C. practice screen */
+  #prac{z-index:70}
+  .prac-in{max-width:640px; padding:10px 16px calc(24px + env(safe-area-inset-bottom))}
+  .prac-top h2{font-size:20px}
+  #pclose{width:44px; height:44px; display:flex; align-items:center; justify-content:center}
+  .tian{
+    width:min(calc(100vw - 32px), calc(100dvh - 300px), 520px);
+    border-color:var(--guide); background:var(--panel); align-self:start; transition:box-shadow .15s, border-color .15s;
+  }
+  .tian svg.g line{stroke:var(--guide)}
+  .tian.wrong{border-color:var(--seal); box-shadow:0 0 0 4px var(--seal-soft)}
+  .tian.ok{border-color:var(--ok); box-shadow:0 0 0 4px var(--seal-soft); animation:okpulse .45s ease}
+  @keyframes okpulse{0%{transform:scale(1)}40%{transform:scale(1.015)}100%{transform:scale(1)}}
+  .modes{justify-content:center; margin:10px 0 4px}
+  .modes button{min-height:44px; padding:8px 14px}
+  #pnext{margin-left:4px}
+  #pentog,#phelp{margin-left:0; width:44px; padding:0; font-size:16px}
+  #pentog{margin-left:auto}
+  .phint1{margin:2px auto 8px; text-align:center; font-size:13px; color:var(--ink2); max-width:520px; min-height:1.3em}
+  .repslab{margin:12px 0 4px; text-align:center; font-size:12px; color:var(--ink2)}
+  .reps span{width:40px; height:40px; font-size:22px}
+  .reps span.ok{background:var(--seal-soft)}
+  #fw polyline{stroke:var(--draw)}
+  .galcell polyline{stroke:var(--draw)}
+  #galbig polyline{stroke:var(--draw)}
+  #galbig svg{border-color:var(--guide)}
+  #fwmodel{color:var(--outline)}
+  .pinfo{display:none}
+  @media (min-width:900px) and (orientation:landscape){
+    .prac-in{
+      max-width:1040px; display:grid; gap:0 28px; align-items:start;
+      grid-template-columns:minmax(320px,540px) 1fr;
+      grid-template-areas:"top top" "grid chars" "grid quiz" "grid stat" "grid reps" "modes gal" "hint gal" "fw gal";
+    }
+    .prac-top{grid-area:top} .tian{grid-area:grid} .modes{grid-area:modes} .phint1{grid-area:hint}
+    #pchars{grid-area:chars} #pquiz{grid-area:quiz} .pstat{grid-area:stat} .repsbox{grid-area:reps}
+    .fwbar{grid-area:fw} .gal{grid-area:gal}
+    .tian{width:min(540px, calc(100dvh - 120px))}
+  }
+  /* E. touch + feedback */
+  .seg button{min-height:44px; padding:8px 14px}
+  .chars button{min-height:44px}
+  button:active:not([disabled]){transform:scale(.97)}
+  button{transition:transform .06s ease}
+  @media (prefers-reduced-motion: reduce){ button{transition:none} button:active{transform:none} .tian.ok{animation:none} }
+  /* F. wall as a progress map */
+  .chip.known{color:var(--ink); background:var(--known)}
+  .chip.known::after{
+    content:"✓"; position:absolute; left:auto; right:3px; top:2px; border:0; transform:none;
+    color:var(--seal); font-size:10px; line-height:1; opacity:.9;
+  }
+  .chip.known .hsktag{display:none}
+  .welcome{
+    border:1px solid var(--rule); border-left:3px solid var(--seal); border-radius:10px;
+    background:var(--panel); padding:12px 14px; margin:14px 0 0; font-size:14px; color:var(--ink2);
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .welcome b{color:var(--ink)}
+  /* misc */
+  table.break td.p, .expy{color:var(--py)}
+  .heat i.l1{background:var(--seal-soft)} .heat i.l2{background:#e58b84}
+  .attrib{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
 </style>
 </head>
 <body>
@@ -239,7 +391,7 @@
       <button data-m="hsk" aria-pressed="true">HSK</button>
       <button data-m="cls" aria-pressed="false">Class</button>
     </div>
-    <h1><span id="ttl">词汇墙</span><small id="sub">HSK 1–3 word wall</small></h1>
+    <h1><span id="ttl">Hanzi Practice</span><small id="sub">汉字练习 · HSK 1–3</small></h1>
     <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><span id="pct">0 / 0</span></div>
   </div>
   <div class="controls">
@@ -254,31 +406,92 @@
       <button data-f="known" aria-pressed="false">Known</button>
       <button data-f="imp" aria-pressed="false" id="impbtn" class="hidden">★ Repeated</button>
     </div>
-    <button class="seg" id="quizbtn" style="padding:6px 12px;font-size:13px;background:var(--panel);color:var(--ink);cursor:pointer;border-radius:8px">✍ Writing quiz</button>
-    <button class="goalbadge" id="goalbadge">Today 0/5</button>
-    <nav class="lvlnav" id="lvlnav"></nav>
   </div>
+  <nav class="lvlnav" id="lvlnav"></nav>
 </header>
 
 <main id="main"></main>
 <div id="notes" class="hidden"></div>
-<div id="sheet" role="dialog" aria-modal="false" aria-label="Word details">
-  <div class="sheet-in">
-    <button id="closer" aria-label="Close">×</button>
-    <div class="sheet-top">
-      <div>
-        <p class="bigword" id="dw"></p>
-        <p class="py" id="dp"></p>
-      </div>
-      <span class="lvltag" id="dl"></span>
+
+<div id="pracview" class="view hidden">
+  <h2 class="vhd">Practice</h2>
+  <div class="cards">
+    <button class="card" id="cardquiz"><b>✍ Writing quiz</b><span>Ten words from the current wall view. You see the meaning and write each character from memory.</span></button>
+    <button class="card" id="cardfree"><b>🖌 Free write</b><span>A blank 田字格 with no checking. Save each attempt and compare your last ten.</span></button>
+    <button class="card" id="cardlast"><b>↺ Continue last character</b><span id="lastsub">Nothing practised yet.</span></button>
+  </div>
+</div>
+
+<div id="statsview" class="view hidden">
+  <h2 class="vhd">Stats</h2>
+  <div class="srow" style="align-items:center">
+    <div class="ring" id="goalring"><b id="goaltxt">0/5</b></div>
+    <div><b id="goalmsg" style="font-size:16px"></b>
+      <div class="exh" style="margin:2px 0 0">A goal action = marking a word known, a completed Write / quiz character, or a saved free write.</div>
+      <div class="sset">Streak <b id="streak">0</b> days · goal set in Settings</div></div>
+  </div>
+  <div class="srow" id="stiles"></div>
+  <div><div class="exh" style="margin:6px 0 0">Last 13 weeks · darker = more actions</div><div class="heat" id="heat"></div></div>
+  <div class="srow" id="stiles2"></div>
+</div>
+
+<div id="setview" class="view hidden">
+  <h2 class="vhd">Settings</h2>
+  <section class="sgrp"><h3>Daily goal</h3>
+    <div class="sset"><label>Actions per day <input type="number" id="goalin" min="1" max="200"></label></div>
+  </section>
+  <section class="sgrp"><h3>Reminder</h3>
+    <div class="sset"><label>Time <input type="time" id="remtime"></label><button class="btn ghost" type="button" id="remon">Enable notifications</button><span id="remstat" class="exh"></span></div>
+    <p class="exh" style="margin:4px 0 0" id="remnote"></p>
+  </section>
+  <section class="sgrp"><h3>Writing</h3>
+    <label class="srowlab"><input type="checkbox" id="penset"><span>Pen only — finger touches are ignored so your palm can rest on the tablet</span></label>
+  </section>
+  <section class="sgrp"><h3>Appearance</h3>
+    <div class="seg" id="themeseg" role="group" aria-label="Theme">
+      <button data-th="system" aria-pressed="true">System</button>
+      <button data-th="light" aria-pressed="false">Light</button>
+      <button data-th="dark" aria-pressed="false">Dark</button>
     </div>
-    <ul class="defs" id="dd"></ul>
-    <div id="dx"></div>
-    <div class="actions">
-      <button class="btn" id="toggleKnown">I know this ✓</button>
-      <button class="btn ghost" id="pracbtn">✍ Practice writing</button>
+  </section>
+  <section class="sgrp"><h3>Progress</h3>
+    <div class="sset">
+      <button class="btn ghost" id="exp" type="button">Export backup</button>
+      <label class="btn ghost" style="cursor:pointer">Import backup<input type="file" id="imp" accept=".json" style="display:none"></label>
+      <button class="btn ghost" id="reset" type="button">Reset all</button>
+    </div>
+    <p class="exh" id="stats" style="margin:6px 0 0"></p>
+  </section>
+  <details class="sgrp"><summary>Advanced</summary>
+    <div class="sset" style="margin-top:8px"><button class="btn ghost" id="syncbtn" type="button">Sync across devices</button><span id="syncstat" class="exh"></span></div>
+  </details>
+  <section class="sgrp"><h3>About</h3>
+    <div class="sset"><button class="btn ghost" id="ver" type="button"></button><a class="linklike" href="privacy.html">Privacy policy</a></div>
+    <div class="attrib">
+      <a href="https://www.mdbg.net/chinese/dictionary?page=cc-cedict" target="_blank" rel="noopener">Dictionary data: CC-CEDICT (CC BY-SA 4.0)</a>
+      <a href="https://hanziwriter.org" target="_blank" rel="noopener">Stroke order: Hanzi Writer (MIT)</a>
+      <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Stroke data: Make Me a Hanzi (Arphic Public License)</a>
+    </div>
+  </section>
+</div>
+<div id="sheet" role="dialog" aria-modal="false" aria-label="Word details">
+  <div class="sheet-scroll">
+    <div class="sheet-in">
+      <div class="grab"></div>
+      <button id="closer" aria-label="Close">×</button>
+      <div class="sheet-top">
+        <p class="bigword" id="dw"></p>
+        <p class="pyrow"><span class="py" id="dp"></span><span class="lvltag" id="dl"></span></p>
+      </div>
+      <ul class="defs" id="dd"></ul>
+      <button class="linklike hidden" id="dmore" type="button"></button>
+      <div id="dx"></div>
       <span class="mdbg">Dictionary: <a id="mdbg" href="#" target="_blank" rel="noopener">MDBG</a></span>
     </div>
+  </div>
+  <div class="sheetbar">
+    <button class="btn ghost" id="toggleKnown">✓ Known</button>
+    <button class="btn primary" id="pracbtn">✍ Practice writing</button>
   </div>
 </div>
 
@@ -291,38 +504,35 @@
       <p class="qsub"><span id="qpy"></span><button id="qshowpy" type="button">Show pinyin</button><span id="qchars"></span><button id="qreveal" type="button">Reveal outline</button><button id="qskip" type="button">Skip →</button><span id="qcount" style="margin-left:auto"></span></p>
       <div class="qprog" id="qprog"></div>
     </div>
+    <div class="tian"><svg class="g" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><div id="hw"></div><div id="fwmodel"></div><svg id="fw" viewBox="0 0 1000 1000"></svg></div>
     <div class="modes" id="pmodes">
       <button data-m="watch" aria-pressed="true">▶ Watch</button>
       <button data-m="trace" aria-pressed="false">Trace</button>
-      <button data-m="write" aria-pressed="false">Write from memory</button>
-      <button data-m="free" aria-pressed="false">Free write</button>
-      <button id="pnext">Next character →</button>
-      <button id="pentog" aria-pressed="false" title="Ignore finger touches; only a stylus draws">✒ Pen only</button>
+      <button data-m="write" aria-pressed="false">Write</button>
+      <button data-m="free" aria-pressed="false">Free</button>
+      <button id="pnext" title="Next character">Next →</button>
+      <button id="pentog" aria-pressed="false" aria-label="Pen only" title="Pen only: ignore finger touches; only a stylus draws">✒</button>
+      <button id="phelp" type="button" aria-label="How practice works" title="How practice works">?</button>
     </div>
-    <div class="tian"><svg class="g" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><div id="hw"></div><div id="fwmodel"></div><svg id="fw" viewBox="0 0 1000 1000"></svg></div>
+    <p class="phint1" id="modehint"></p>
     <div class="fwbar" id="fwbar"><button class="btn ghost" id="fwundo">↶ Undo stroke</button><button class="btn ghost" id="fwclear">Clear</button><button class="btn" id="fwsave">💾 Save &amp; next</button><button class="btn ghost" id="fwghost" type="button">👁 Hold to see model</button></div>
     <div class="pstat"><span id="pchk1">Stroke <b id="pstroke">0</b> / <b id="ptotal">0</b></span><span id="pchk2">Mistakes <b id="pmiss">0</b></span><span id="phint" style="color:var(--seal)"></span></div>
-    <div class="reps" id="preps"></div>
+    <div class="repsbox" id="repsbox"><p class="repslab">5 correct writes</p><div class="reps" id="preps"></div></div>
     <div class="gal" id="gal"><div class="galh"><span>My <b id="galc"></b> · <b id="galn">0</b> saved · last 10 kept</span><button class="linklike" id="galclear">Clear all</button></div><div class="galgrid" id="galgrid"></div></div>
     <dialog id="galbig"><div id="galbigin"></div><div class="actions" style="margin-top:8px"><span id="galbigd" class="exh"></span><button class="btn ghost" type="button" id="galbigclose" style="margin-left:auto">Close</button></div></dialog>
-    <p class="pinfo">Watch shows the stroke order; Trace shows a faint outline and checks each stroke; Write from memory hides everything and checks each stroke (five correct writes fill the boxes). Free write is a blank grid with no checking: write, Save &amp; next, and your last 10 attempts stay below so you can see your progress.</p>
+    <dialog id="helpdlg"><form method="dialog" class="syncin">
+      <h3 style="margin:0 0 10px">How practice works</h3>
+      <p class="exh" style="margin:0">Watch shows the stroke order; Trace shows a faint outline and checks each stroke; Write hides everything and checks each stroke (five correct writes fill the boxes). Free write is a blank grid with no checking: write, Save &amp; next, and your last 10 attempts stay below so you can see your progress. ✒ Pen only ignores finger touches so your palm can rest on a tablet.</p>
+      <div class="actions" style="margin-top:12px"><button class="btn ghost" type="submit" style="margin-left:auto">Close</button></div>
+    </form></dialog>
   </div>
 </div>
-<footer><div class="footin">
-  <span id="stats"></span>
-  <button class="linklike" id="exp">Export progress</button>
-  <label class="linklike" style="cursor:pointer">Import progress<input type="file" id="imp" accept=".json" style="display:none"></label>
-  <button class="linklike" id="reset">Reset all</button>
-  <button class="linklike" id="syncbtn">Sync across devices</button>
-  <button class="linklike" id="statsbtn">Stats &amp; goal</button>
-  <button class="linklike" id="ver" style="color:var(--faint)"></button>
-  <span id="syncstat" style="margin-left:auto"></span>
-</div>
-<div class="footin attrib">
-  <a href="https://www.mdbg.net/chinese/dictionary?page=cc-cedict" target="_blank" rel="noopener">Dictionary data: CC-CEDICT (CC BY-SA 4.0)</a>
-  <a href="https://hanziwriter.org" target="_blank" rel="noopener">Stroke order: Hanzi Writer (MIT)</a>
-  <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Stroke data: Make Me a Hanzi (Arphic Public License)</a>
-</div></footer>
+<nav id="tabbar" role="tablist" aria-label="Sections">
+  <button data-t="wall" role="tab" aria-selected="true"><span class="ti" aria-hidden="true">▦</span>Wall</button>
+  <button data-t="prac" role="tab" aria-selected="false"><span class="ti" aria-hidden="true">✍</span>Practice</button>
+  <button data-t="stats" role="tab" aria-selected="false"><span class="ti" aria-hidden="true">◷</span>Stats<span id="goalbadge">0/5</span></button>
+  <button data-t="set" role="tab" aria-selected="false"><span class="ti" aria-hidden="true">⚙</span>Settings</button>
+</nav>
 <dialog id="syncdlg">
   <form method="dialog" class="syncin">
     <h3 style="margin:0 0 6px">Sync via GitHub Gist</h3>
@@ -334,23 +544,6 @@
       <button class="btn ghost" id="syncoff" type="button">Disconnect</button>
       <button class="btn ghost" type="submit" style="margin-left:auto">Close</button>
     </div>
-  </form>
-</dialog>
-<dialog id="statsdlg">
-  <form method="dialog" class="syncin">
-    <h3 style="margin:0 0 6px">Stats &amp; daily goal</h3>
-    <div class="srow" style="align-items:center">
-      <div class="ring" id="goalring"><b id="goaltxt">0/5</b></div>
-      <div><b id="goalmsg" style="font-size:16px"></b><div class="exh" style="margin:2px 0 0">A goal action = marking a word known, a completed Write / quiz character, or a saved free write.</div>
-        <div class="sset"><label>Daily goal <input type="number" id="goalin" min="1" max="200"></label><label>Streak <b id="streak">0</b> days</label></div></div>
-    </div>
-    <div class="srow" id="stiles"></div>
-    <div><div class="exh" style="margin:6px 0 0">Last 13 weeks · darker = more actions</div><div class="heat" id="heat"></div></div>
-    <div class="srow" id="stiles2"></div>
-    <h4 style="margin:14px 0 4px">Reminder</h4>
-    <div class="sset"><label>Time <input type="time" id="remtime"></label><button class="btn ghost" type="button" id="remon">Enable notifications</button><span id="remstat" class="exh"></span></div>
-    <p class="exh" style="margin:4px 0 0" id="remnote"></p>
-    <div class="actions" style="margin-top:12px"><button class="btn ghost" type="submit" style="margin-left:auto">Close</button></div>
   </form>
 </dialog>
 <dialog id="verdlg">
@@ -368,8 +561,17 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 const CHANGELOG = [
+  {v:'1.7.0', d:'2026-09-14', n:[
+    'Bottom tab bar: Wall, Practice, Stats, Settings',
+    'Slimmer header: title and progress, then search and filter, then a scrollable level row',
+    'Word sheet: bigger character, first three definitions with a Show more toggle, and a fixed Known / Practice writing bar',
+    'Practice: the grid fills the screen with the mode buttons right under it, a one-line hint per mode, and a two-column layout on landscape tablets',
+    'Known words now tint the wall so it reads as a progress map, with a first-launch hint',
+    'Light / dark / system theme in Settings, warm paper palette in dark',
+    'Haptic tick on a correct stroke, red flash on a wrong one, green pulse when a character is finished'
+  ]},
   {v:'1.6.0', d:'2026-09-14', n:['Class wall removed from the public app','Attribution for CC-CEDICT, Hanzi Writer and Make Me a Hanzi in the footer']},
   {v:'1.5.3', d:'2026-09-14', n:['Renamed the app to Hanzi Practice','Installs from the custom domain at the site root']},
   {v:'1.5.2', d:'2026-09-14', n:['Free write: the faint model and the gallery model are now drawn from the same stroke data as Trace / Write, so all three match exactly']},
@@ -385,6 +587,19 @@ const CHANGELOG = [
   {v:'1.0.0', d:'2026-09-07', n:['First release: HSK 1–3 word wall PWA, 572 words, known-word tracking, export / import']},
 ];
 const $=id=>document.getElementById(id);
+/* ---------- theme (system / light / dark) ---------- */
+const THKEY='hskwall.theme';
+function applyTheme(t){
+  const r=document.documentElement;
+  if(t==='light'||t==='dark') r.setAttribute('data-theme',t); else r.removeAttribute('data-theme');
+  localStorage.setItem(THKEY,t);
+  document.querySelectorAll('#themeseg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.th===t));
+  const dark = t==='dark' || (t!=='light' && matchMedia('(prefers-color-scheme: dark)').matches);
+  const m=document.querySelector('meta[name=theme-color]'); if(m) m.content = dark?'#1c1b18':'#c3272b';
+}
+applyTheme(localStorage.getItem(THKEY)||'system');
+document.querySelectorAll('#themeseg button').forEach(b=>b.onclick=()=>applyTheme(b.dataset.th));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>applyTheme(localStorage.getItem(THKEY)||'system'));
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 
 /* ---------- datasets ---------- */
@@ -393,7 +608,7 @@ if(!CD.words.length) document.getElementById('modeseg').classList.add('hidden');
 const HSK_LVL = {1:'HSK 1',2:'HSK 2',3:'HSK 3',4:'HSK 4',5:'HSK 5',6:'HSK 6',0:'Extra'};
 const SETS = {
   hsk: {
-    title:'词汇墙', sub:'HSK 1–3 word wall', key:'hskwall.known.v1',
+    title:'Hanzi Practice', sub:'汉字练习 · HSK 1–3', key:'hskwall.known.v1',
     words: DATA, order:[1,2,3,4,5,6,0],
     label:l=>HSK_LVL[l], short:l=>HSK_LVL[l], anchor:l=>'lvl'+l,
   },
@@ -408,6 +623,8 @@ const SETS = {
 let MODE = localStorage.getItem('hskwall.mode')==='cls' && CD.words.length ? 'cls' : 'hsk';
 let S, known, byLvl, chips, cur=null, filter='all', view='words';
 
+const WELK='hskwall.welcome';
+function dismissWelcome(){ const w=$('welcome'); if(w){ localStorage.setItem(WELK,'1'); w.remove(); } }
 const save = (w,val)=>{
   localStorage.setItem(S.key, JSON.stringify([...known]));
   if(w!==undefined && val) logEv('known',w);
@@ -423,14 +640,31 @@ const dayKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+String(d.getMo
 const goal=()=>+(localStorage.getItem(GOALK)||5);
 function logEv(k,w){ LOG.push({t:Date.now(),k,w}); if(LOG.length>6000) LOG=LOG.slice(-6000); localStorage.setItem(LOGK,JSON.stringify(LOG)); updateGoal(); if(typeof syncPush==='function') syncPush(); }
 const todayCount=()=>{ const k=dayKey(Date.now()); return LOG.filter(e=>dayKey(e.t)===k).length; };
-function updateGoal(){ const n=todayCount(), g=goal(); const b=$('goalbadge'); b.textContent=`Today ${n}/${g}`; b.classList.toggle('met',n>=g); }
+function updateGoal(){ const n=todayCount(), g=goal(); const b=$('goalbadge'); b.textContent=`${n}/${g}`; b.classList.toggle('met',n>=g); }
+/* ---------- tabs ---------- */
+let TAB='wall';
+function showTab(t){
+  TAB=t;
+  document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-selected', b.dataset.t===t));
+  $('main').classList.toggle('hidden', t!=='wall' || view!=='words');
+  $('notes').classList.toggle('hidden', t!=='wall' || view!=='notes');
+  document.querySelector('header').classList.toggle('hidden', t!=='wall');
+  $('pracview').classList.toggle('hidden', t!=='prac');
+  $('statsview').classList.toggle('hidden', t!=='stats');
+  $('setview').classList.toggle('hidden', t!=='set');
+  if(t==='prac') fillPracticeCards();
+  if(t==='stats') openStats();
+  if(t==='set') openSettings();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
 function streak(){ const days=new Set(LOG.map(e=>dayKey(e.t))); let n=0, d=new Date(); if(!days.has(dayKey(d))) d.setDate(d.getDate()-1); while(days.has(dayKey(d))){ n++; d.setDate(d.getDate()-1); } return n; }
 
 /* ---------- build wall ---------- */
 const main=$('main'), nav=$('lvlnav'), notesEl=$('notes');
 function build(){
   S=SETS[MODE]; known=loadKnown(S.key); const other=loadKnown(SETS[MODE==='hsk'?'cls':'hsk'].key); S.words.forEach(e=>{ if(other.has(e.w)) known.add(e.w); }); cur=null; closeSheet();
-  document.title=(MODE==='cls'?'课堂词汇':'词汇墙')+' · Hanzi Practice';
+  document.title=MODE==='cls'?'Hanzi Practice · 课堂词汇':'Hanzi Practice · 汉字练习';
   $('ttl').textContent=S.title; $('sub').textContent=S.sub;
   document.querySelectorAll('#modeseg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===MODE));
   $('impbtn').classList.toggle('hidden', MODE!=='cls');
@@ -439,6 +673,11 @@ function build(){
   byLvl={}; S.order.forEach(l=>byLvl[l]=[]);
   S.words.forEach((e,i)=>{ e.i_=i; e.pl=e.p.toLowerCase(); e.dl=e.d.join(' ').toLowerCase()+' '+(e.ex||[]).join(' ').toLowerCase(); (byLvl[e.l]??(byLvl[e.l]=[])).push(e); });
   main.innerHTML=''; nav.innerHTML=''; chips=new Array(S.words.length);
+  if(!known.size && !localStorage.getItem(WELK)){
+    const w=document.createElement('div'); w.className='welcome'; w.id='welcome';
+    w.innerHTML='<span aria-hidden="true">👋</span><span><b>Tap a word to open it.</b> Mark it ✓ Known when you can read and write it — known words tint the wall so you can see your progress at a glance.</span>';
+    main.appendChild(w);
+  }
   S.order.forEach(l=>{
     const list=byLvl[l]; if(!list||!list.length) return;
     const sec=document.createElement('section'); sec.id=S.anchor(l);
@@ -503,7 +742,11 @@ function openWord(e){
   if(chips[e.i_]) chips[e.i_].classList.add('sel');
   $('dw').textContent=e.w; $('dw').classList.toggle('knownw', known.has(e.w));
   $('dp').textContent=e.p; $('dl').textContent=S.label(e.l)+(e.h?' · also HSK '+e.h:'')+(e.i?' · ★ repeated':'');
-  $('dd').innerHTML=e.d.map(d=>`<li>${esc(d)}</li>`).join('');
+  $('dd').innerHTML=e.d.map((d,i)=>`<li class="${i>2?'more':''}">${esc(d)}</li>`).join('');
+  $('dd').classList.remove('all');
+  const extra=Math.max(0,e.d.length-3);
+  $('dmore').classList.toggle('hidden', extra===0);
+  $('dmore').textContent=`Show ${extra} more`;
   const dx=$('dx');
   if(e.ex && e.ex.length){
     dx.innerHTML=`<p class="exh">From class notes${e.n>1?` · appears ${e.n}× in the notes`:''}:</p><ul class="defs">`+e.ex.map(s=>`<li>${esc(s).replace(esc(e.w),'<mark>'+esc(e.w)+'</mark>')}</li>`).join('')+`</ul>`;
@@ -516,10 +759,19 @@ function openWord(e){
   if(exs && exs.length){
     dx.innerHTML+=`<p class="exh">Example sentences:</p><ul class="exlist">`+exs.map(x=>`<li><span class="exzh">${esc(x.zh).replace(esc(e.w),'<mark>'+esc(e.w)+'</mark>')}</span><span class="expy">${esc(x.py)}</span><span class="exen">${esc(x.en)}</span></li>`).join('')+`</ul>`;
   }
-  $('toggleKnown').textContent = known.has(e.w) ? 'Still learning ↺' : 'I know this ✓';
+  setKnownBtn();
   $('mdbg').href='https://www.mdbg.net/chinese/dictionary?wdqb='+encodeURIComponent(e.w);
   sheet.classList.add('open');
 }
+function setKnownBtn(){
+  const k=cur && known.has(cur.w);
+  const b=$('toggleKnown'); b.textContent=k?'✓ Known':'✓ Known'; b.classList.toggle('on',!!k); b.setAttribute('aria-pressed',!!k);
+}
+$('dmore').onclick=()=>{
+  const all=$('dd').classList.toggle('all');
+  const extra=cur?Math.max(0,cur.d.length-3):0;
+  $('dmore').textContent = all ? 'Show less' : `Show ${extra} more`;
+};
 function closeSheet(){sheet.classList.remove('open'); document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel')); cur=null;}
 $('closer').onclick=closeSheet;
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheet()});
@@ -531,7 +783,7 @@ $('toggleKnown').onclick=()=>{
   save(cur.w, known.has(cur.w));
   chips[cur.i_].classList.toggle('known', known.has(cur.w));
   $('dw').classList.toggle('knownw', known.has(cur.w));
-  $('toggleKnown').textContent = known.has(cur.w) ? 'Still learning ↺' : 'I know this ✓';
+  setKnownBtn(); dismissWelcome();
   refresh(false);
 };
 
@@ -586,7 +838,7 @@ $('imp').addEventListener('change',ev=>{
   });
 });
 $('reset').onclick=()=>{
-  if(confirm(`Clear all known-word marks for ${S.sub}?`)){ const ws=[...known]; known.clear(); localStorage.setItem(S.key,'[]'); const o=SETS[MODE==='hsk'?'cls':'hsk']; const os=loadKnown(o.key); ws.forEach(w=>os.delete(w)); localStorage.setItem(o.key, JSON.stringify([...os])); syncPush(); S.words.forEach(e=>chips[e.i_].classList.remove('known')); refresh(true); }
+  if(confirm(`Clear all known-word marks for ${S.title}?`)){ const ws=[...known]; known.clear(); localStorage.setItem(S.key,'[]'); const o=SETS[MODE==='hsk'?'cls':'hsk']; const os=loadKnown(o.key); ws.forEach(w=>os.delete(w)); localStorage.setItem(o.key, JSON.stringify([...os])); syncPush(); S.words.forEach(e=>chips[e.i_].classList.remove('known')); refresh(true); }
 };
 
 /* ---------- GitHub Gist sync ---------- */
@@ -663,20 +915,22 @@ let preps=JSON.parse(localStorage.getItem(PKEY)||'{}');
 let pw=null, pchars=[], pidx=0, pmode='watch', writer=null, pmiss=0;
 let penOnly=localStorage.getItem('hskwall.penonly')==='1';
 let QZ=null; // {queue:[words], i, results:[{w,miss,skipped}], showpy, miss}
-function setPen(v){ penOnly=v; localStorage.setItem('hskwall.penonly',v?'1':'0'); $('pentog').setAttribute('aria-pressed',v); }
-$('pentog').onclick=()=>setPen(!penOnly); setPen(penOnly);
+function setPen(v){ penOnly=v; localStorage.setItem('hskwall.penonly',v?'1':'0'); $('pentog').setAttribute('aria-pressed',v); $('penset').checked=v; }
+$('pentog').onclick=()=>setPen(!penOnly); $('penset').onchange=()=>setPen($('penset').checked); setPen(penOnly);
 // block finger touches before they reach Hanzi Writer's SVG (Apple Pencil = touchType 'stylus'; other styluses use pointerType 'pen')
 ['touchstart','touchmove','touchend'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(!penOnly) return; const tt=ev.changedTouches&&ev.changedTouches[0]; if(tt && tt.touchType!=='stylus'){ ev.stopPropagation(); ev.preventDefault(); } },{capture:true,passive:false}));
 ['pointerdown','pointermove','pointerup'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(penOnly && ev.pointerType==='touch') ev.stopPropagation(); },{capture:true}));
 const HWD=window.HW_DATA||{};
+const cssv=(n,f)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||f;
 const charSVG=(c,color)=>{ const d=HWD[c]; if(!d) return `<span style="font-family:'Kaiti SC','KaiTi',serif">${c}</span>`; return `<svg viewBox="0 0 1024 1024" style="width:100%;height:100%;display:block"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map(p=>`<path d="${p}" fill="${color}"/>`).join('')}</g></svg>`; };
-function openPractice(e){
+function openPractice(e,startMode){
   if(typeof HanziWriter==='undefined'){ alert('Writing module not loaded yet. Reload once online.'); return; }
   pw=e; pchars=[...e.w].filter(c=>/[\u4e00-\u9fff]/.test(c)); if(!pchars.length) return;
+  localStorage.setItem(LASTK,e.w);
   const syl=e.p.split(/\s+/); 
   $('pw').textContent=e.w; $('pp').textContent=e.p;
   $('pchars').innerHTML=pchars.map((c,i)=>`<button data-i="${i}" aria-pressed="${i===0}" class="${(preps[c]||0)>=5?'done':''}">${c}<br><small style="font-size:11px">${syl[i]||''}</small></button>`).join('');
-  pidx=0; pmode=QZ?'write':'watch'; $('prac').classList.add('open'); document.body.style.overflow='hidden';
+  pidx=0; pmode=QZ?'write':(startMode||'watch'); $('prac').classList.add('open'); document.body.style.overflow='hidden';
   if(QZ && !$('qmean')){ $('pquiz').innerHTML=PQUIZ_HTML; bindQuiz(); }
   $('pquiz').classList.toggle('on',!!QZ); $('pmodes').classList.toggle('hidden',!!QZ); $('pchars').classList.toggle('hidden',!!QZ);
   document.querySelector('.tian').classList.remove('hidden');
@@ -697,7 +951,22 @@ function pickQuiz(){
   pool=[...pool].sort(()=>Math.random()-0.5).slice(0,10);
   QZ={queue:pool,i:0,results:[],showpy:false,miss:0}; openPractice(pool[0]);
 }
-$('quizbtn').onclick=pickQuiz;
+const LASTK='hskwall.lastword';
+function fillPracticeCards(){
+  const lw=localStorage.getItem(LASTK);
+  const e=lw?S.words.find(x=>x.w===lw):null;
+  $('cardlast').disabled=!e;
+  $('lastsub').textContent = e ? `${e.w} · ${e.p}` : 'Nothing practised yet — open a word and tap Practice writing.';
+}
+$('cardquiz').onclick=()=>pickQuiz();
+$('cardfree').onclick=()=>{
+  const lw=localStorage.getItem(LASTK);
+  const e=(lw&&S.words.find(x=>x.w===lw)) || S.words.find(x=>!known.has(x.w)) || S.words[0];
+  if(!e) return; QZ=null; openPractice(e,'free');
+};
+$('cardlast').onclick=()=>{
+  const e=S.words.find(x=>x.w===localStorage.getItem(LASTK)); if(!e) return; QZ=null; openPractice(e);
+};
 function quizNext(skipped){
   QZ.results[QZ.i]={w:pw.w,miss:QZ.miss,skipped:!!skipped};
   if(!skipped) logEv('quiz',pw.w);
@@ -707,9 +976,10 @@ function quizNext(skipped){
   $('pw').textContent='Quiz done'; $('pp').textContent='';
   $('pquiz').innerHTML=`<div class="qsum"><div class="big">${clean} / ${r.length}</div><div>written with no mistakes</div><table>${r.map(x=>`<tr><td><b>${x.w}</b></td><td>${QZ.queue.find(q=>q.w===x.w).p}</td><td>${x.skipped?'skipped':(x.miss?x.miss+' mistakes':'✓ clean')}</td></tr>`).join('')}</table><button class="btn" type="button" id="qagain">Quiz again</button></div>`;
   $('qagain').onclick=()=>{ closePractice(); pickQuiz(); };
-  if(writer) writer.cancelQuiz(); $('hw').innerHTML=''; writer=null; document.querySelector('.tian').classList.add('hidden'); $('pchk1').classList.add('hidden'); $('pchk2').classList.add('hidden'); $('preps').classList.add('hidden'); $('phint').textContent='';
+  if(writer) writer.cancelQuiz(); $('hw').innerHTML=''; writer=null; document.querySelector('.tian').classList.add('hidden'); $('pmodes').classList.add('hidden'); $('modehint').textContent=''; $('pchk1').classList.add('hidden'); $('pchk2').classList.add('hidden'); $('repsbox').classList.add('hidden'); $('phint').textContent='';
 }
-function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); }
+function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); $('repsbox').classList.remove('hidden'); $('pchk1').classList.remove('hidden'); $('pchk2').classList.remove('hidden'); if(TAB==='prac') fillPracticeCards(); }
+$('phelp').onclick=()=>$('helpdlg').showModal();
 $('pclose').onclick=closePractice; $('pracbtn').onclick=()=>{ if(cur){ QZ=null; openPractice(cur); } };
 $('pchars').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; pidx=+b.dataset.i; loadChar(); });
 $('pnext').onclick=()=>{ pidx=(pidx+1)%pchars.length; loadChar(); };
@@ -717,34 +987,49 @@ document.querySelectorAll('#pmodes button[data-m]').forEach(b=>b.onclick=()=>{ p
 function loadChar(){
   const c=pchars[pidx];
   document.querySelectorAll('#pchars button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.i===pidx));
-  const box=$('hw'); box.innerHTML=''; const size=box.clientWidth||360;
+  const box=$('hw'); box.innerHTML=''; const size=box.clientWidth||360; lastw=size;
   writer=HanziWriter.create(box, c, {width:size, height:size, padding:Math.round(size*0.08), showOutline:true, showCharacter:true,
-    strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#1b1d21', outlineColor:'#c9c9c9', drawingColor:'#2b5fb8', drawingWidth:Math.max(6,size/40),
+    strokeColor:cssv('--ink','#1b1d21'), outlineColor:cssv('--outline','#c9c9c9'), drawingColor:cssv('--draw','#2b5fb8'), drawingWidth:Math.max(6,size/40),
     strokeAnimationSpeed:1, delayBetweenStrokes:250, highlightColor:'#e05a52',
     charDataLoader:(ch,done)=>{ if(HWD[ch]) done(HWD[ch]); else fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(ch)+'.json').then(r=>r.json()).then(done).catch(()=>$('phint').textContent='No stroke data for '+ch); }});
   $('ptotal').textContent=HWD[c]?HWD[c].strokes.length:'?'; $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
-  drawReps(c); $('fwmodel').innerHTML=charSVG(c,'#d8d8d8'); drawGal(c); fwReset(); runMode();
+  drawReps(c); $('fwmodel').innerHTML=charSVG(c,cssv('--outline','#d8d8d8')); drawGal(c); fwReset(); runMode();
 }
 function drawReps(c){ const n=preps[c]||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
+const MODEHINT={
+  watch:'Watch the stroke order, then switch to Trace.',
+  trace:'Trace the faint outline — each stroke is checked.',
+  write:'Write from memory. Five correct writes fill the boxes.',
+  free:'Blank grid, nothing is checked. Save & next keeps your last ten.'
+};
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(_){} }
+function flash(cls){ const t=document.querySelector('.tian'); t.classList.add(cls); setTimeout(()=>t.classList.remove(cls), cls==='wrong'?150:450); }
 function runMode(){
   document.querySelectorAll('#pmodes button[data-m]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===pmode));
+  $('modehint').textContent=QZ?'Write the word from the meaning — each stroke is checked.':(MODEHINT[pmode]||'');
   if(!writer) return; writer.cancelQuiz(); $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
   const free=pmode==='free';
-  fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); $('gal').classList.toggle('on',free); $('preps').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
+  fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); $('gal').classList.toggle('on',free); $('repsbox').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
   $('fwmodel').classList.remove('on');
   if(free){ writer.hideCharacter(); writer.hideOutline(); return; }
   if(pmode==='watch'){ writer.showOutline(); writer.showCharacter(); writer.animateCharacter(); return; }
   const trace=pmode==='trace';
   writer.hideCharacter(); if(trace) writer.showOutline(); else writer.hideOutline();
   writer.quiz({showOutline:trace, showHintAfterMisses:trace?1:3, highlightOnComplete:true, leniency:1.2,
-    onCorrectStroke:s=>{ $('pstroke').textContent=s.strokeNum+1; },
-    onMistake:s=>{ pmiss++; $('pmiss').textContent=pmiss; if(s.mistakesOnStroke>=3) $('phint').textContent='Watch the red hint for this stroke'; },
-    onComplete:s=>{ const c=pchars[pidx];
+    onCorrectStroke:s=>{ $('pstroke').textContent=s.strokeNum+1; buzz(10); },
+    onMistake:s=>{ pmiss++; $('pmiss').textContent=pmiss; flash('wrong'); if(s.mistakesOnStroke>=3) $('phint').textContent='Watch the red hint for this stroke'; },
+    onComplete:s=>{ const c=pchars[pidx]; flash('ok'); buzz([10,40,10]);
       if(QZ){ QZ.miss+=s.totalMistakes; logEv('write',c); if(pidx<pchars.length-1){ setTimeout(()=>{ pidx++; loadChar(); },600); } else { $('pw').textContent=pw.w; $('pp').textContent=pw.p; setTimeout(()=>quizNext(false),900); } return; }
       if(!trace){ logEv('write',c); preps[c]=Math.min(5,(preps[c]||0)+1); localStorage.setItem(PKEY,JSON.stringify(preps)); drawReps(c); if(preps[c]>=5) document.querySelector(`#pchars button[data-i="${pidx}"]`).classList.add('done'); }
       $('phint').textContent=(s.totalMistakes===0?'Perfect! ':'Done · '+s.totalMistakes+' mistakes. ')+'Tap Write / Trace to go again.'; }
   });
 }
+let rsz=null, lastw=0;
+addEventListener('resize',()=>{
+  if(!$('prac').classList.contains('open')||!writer) return;
+  const w=$('hw').clientWidth; if(Math.abs(w-lastw)<8) return;
+  clearTimeout(rsz); rsz=setTimeout(()=>{ lastw=$('hw').clientWidth; loadChar(); },200);
+});
 $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice(); });
 
 /* ---------- free write ---------- */
@@ -787,21 +1072,20 @@ $('galbigclose').onclick=()=>$('galbig').close();
 $('galclear').onclick=()=>{ const c=pchars[pidx]; if(fws[c] && confirm('Delete all saved writings of '+c+'?')){ delete fws[c]; fwSave(); drawGal(c); } };
 
 /* ---------- stats & reminder ---------- */
+function openSettings(){ $('goalin').value=goal(); const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); $('remtime').value=rem.time||'20:00'; remStatus(); $('penset').checked=penOnly; }
 function openStats(){
-  const n=todayCount(), g=goal(); $('goalin').value=g;
+  const n=todayCount(), g=goal();
   $('goalring').style.setProperty('--p',Math.min(100,100*n/g)+'%'); $('goaltxt').textContent=n+'/'+g;
   $('goalmsg').textContent=n>=g?'Goal reached today 🎉':(g-n)+" more to reach today's goal"; $('streak').textContent=streak();
   const hk=loadKnown(SETS.hsk.key).size, ck=loadKnown(SETS.cls.key).size;
   const wk=t=>Date.now()-t<7*864e5;
   const c=k=>LOG.filter(e=>e.k===k).length, cw=k=>LOG.filter(e=>e.k===k&&wk(e.t)).length;
-  $('stiles').innerHTML=`<div class="stile"><b>${hk} <small style="font-size:12px;font-weight:400">/ ${SETS.hsk.words.length}</small></b><span>HSK words known</span></div><div class="stile"><b>${ck} <small style="font-size:12px;font-weight:400">/ ${SETS.cls.words.length}</small></b><span>Class words known</span></div><div class="stile"><b>${cw('known')}</b><span>marked known this week</span></div>`;
+  $('stiles').innerHTML=`<div class="stile"><b>${hk} <small style="font-size:12px;font-weight:400">/ ${SETS.hsk.words.length}</small></b><span>HSK words known</span></div>${SETS.cls.words.length?`<div class="stile"><b>${ck} <small style="font-size:12px;font-weight:400">/ ${SETS.cls.words.length}</small></b><span>Class words known</span></div>`:''}<div class="stile"><b>${cw('known')}</b><span>marked known this week</span></div>`;
   $('stiles2').innerHTML=`<div class="stile"><b>${c('write')}</b><span>characters written correctly <small>(${cw('write')} this week)</small></span></div><div class="stile"><b>${c('quiz')}</b><span>quiz words completed <small>(${cw('quiz')} this week)</small></span></div><div class="stile"><b>${c('free')}</b><span>free writes saved <small>(${cw('free')} this week)</small></span></div>`;
   const counts={}; LOG.forEach(e=>{ const k=dayKey(e.t); counts[k]=(counts[k]||0)+1; });
   const today=new Date(); today.setHours(0,0,0,0); const start=new Date(today); start.setDate(start.getDate()-start.getDay()-12*7);
   let cells=[]; for(let r=0;r<7;r++) for(let col=0;col<13;col++){ const d=new Date(start); d.setDate(d.getDate()+col*7+r); const k=dayKey(d); const v=counts[k]||0; const lvl=v===0?'':v>=g?'l3':v>=Math.ceil(g/2)?'l2':'l1'; cells.push(`<i class="${lvl} ${k===dayKey(today)?'today':''}" title="${k}: ${v}"></i>`); }
   $('heat').innerHTML=cells.join('');
-  const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); $('remtime').value=rem.time||'20:00';
-  remStatus(); $('statsdlg').showModal();
 }
 function remStatus(){
   const rem=JSON.parse(localStorage.getItem(REMK)||'{}');
@@ -810,8 +1094,7 @@ function remStatus(){
   $('remon').textContent=(perm==='granted'&&rem.on)?'Turn off':'Enable notifications';
   $('remnote').textContent='Reminders fire when the app is open or installed to the home screen (Android Chrome checks in the background; on iPad the reminder shows the next time you open the app if the goal was missed). For a guaranteed nudge, also add a phone alarm.';
 }
-$('statsbtn').onclick=openStats; $('goalbadge').onclick=openStats;
-$('goalin').onchange=()=>{ const v=Math.max(1,Math.min(200,+$('goalin').value||5)); localStorage.setItem(GOALK,v); updateGoal(); $('statsdlg').close(); openStats(); };
+$('goalin').onchange=()=>{ const v=Math.max(1,Math.min(200,+$('goalin').value||5)); $('goalin').value=v; localStorage.setItem(GOALK,v); updateGoal(); };
 $('remtime').onchange=()=>{ const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); rem.time=$('remtime').value; localStorage.setItem(REMK,JSON.stringify(rem)); remStatus(); };
 $('remon').onclick=async()=>{
   const rem=JSON.parse(localStorage.getItem(REMK)||'{}');
@@ -827,16 +1110,16 @@ function checkReminder(){
   if(now<due || rem.last===dayKey(now) || todayCount()>=goal()) return;
   rem.last=dayKey(now); localStorage.setItem(REMK,JSON.stringify(rem));
   const opts={body:`${goal()-todayCount()} more to reach today's goal. Tap to practice.`,icon:'icon-192.png',tag:'hsk-goal'};
-  if(navigator.serviceWorker) navigator.serviceWorker.ready.then(r=>r.showNotification('词汇墙 · daily goal',opts)).catch(()=>{ try{ new Notification('词汇墙 · daily goal',opts); }catch(_){} });
-  else { try{ new Notification('词汇墙 · daily goal',opts); }catch(_){} }
+  if(navigator.serviceWorker) navigator.serviceWorker.ready.then(r=>r.showNotification('Hanzi Practice · daily goal',opts)).catch(()=>{ try{ new Notification('Hanzi Practice · daily goal',opts); }catch(_){} });
+  else { try{ new Notification('Hanzi Practice · daily goal',opts); }catch(_){} }
 }
 setInterval(checkReminder,60*1000); checkReminder();
 if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data==='goal-state'){ const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); if(ev.ports[0]) ev.ports[0].postMessage({on:!!rem.on,time:rem.time||'20:00',today:todayCount(),goal:goal(),last:rem.last||''}); } });
 updateGoal();
 
 /* ---------- start ---------- */
-build(); doPull(false);
-$('ver').textContent='v'+APP_VERSION;
+build(); doPull(false); showTab('wall');
+$('ver').textContent='Version '+APP_VERSION;
 $('ver').onclick=()=>{ $('verlist').innerHTML=CHANGELOG.map(c=>`<div class="vh"><b>v${c.v}</b><span class="vd">${c.d}</span><ul>${c.n.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join(''); $('verdlg').showModal(); };
 </script>
 <script>
