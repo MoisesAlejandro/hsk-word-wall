@@ -151,7 +151,7 @@
   #fw{position:absolute; inset:0; width:100%; height:100%; display:none; touch-action:none}
   #fw.on{display:block}
   #fw polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
-  #fwmodel{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
+  #fwmodel{position:absolute; inset:8%; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
   #fwmodel.on{display:flex}
   .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
   .fwbar.on{display:flex}
@@ -202,6 +202,10 @@
   .sset input[type=number],.sset input[type=time]{padding:5px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--paper); color:var(--ink); font-size:14px; width:90px}
   .goalbadge{font-size:12px; color:var(--ink2); border:1px solid var(--rule); border-radius:12px; padding:2px 8px; cursor:pointer; background:var(--panel)}
   .goalbadge.met{border-color:#2e9e5b; color:#2e9e5b}
+  .exlist{list-style:none; margin:4px 0 0; padding:0}
+  .exlist li{padding:6px 0; border-bottom:1px dashed var(--rule); display:grid; gap:1px}
+  .exlist li:last-child{border-bottom:0}
+  .exzh{font-size:18px} .expy{font-size:13px; color:var(--seal)} .exen{font-size:13px; color:var(--ink2)}
   .pinfo{font-size:13px; color:var(--ink2); text-align:center; margin-top:14px}
   @media (max-width:600px){
     .bigword{font-size:34px}
@@ -271,7 +275,7 @@
     <div class="actions">
       <button class="btn" id="toggleKnown">I know this ✓</button>
       <button class="btn ghost" id="pracbtn">✍ Practice writing</button>
-      <span class="mdbg">Example sentences: <a id="mdbg" href="#" target="_blank" rel="noopener">MDBG</a> · <a id="tato" href="#" target="_blank" rel="noopener">Tatoeba</a></span>
+      <span class="mdbg">Dictionary: <a id="mdbg" href="#" target="_blank" rel="noopener">MDBG</a></span>
     </div>
   </div>
 </div>
@@ -356,9 +360,12 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="class-data.js"></script>
 <script src="hanzi-writer.min.js"></script>
 <script src="strokes-data.js"></script>
+<script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.2';
 const CHANGELOG = [
+  {v:'1.5.2', d:'2026-09-14', n:['Free write: the faint model and the gallery model are now drawn from the same stroke data as Trace / Write, so all three match exactly']},
+  {v:'1.5.1', d:'2026-09-08', n:['Two example sentences (hanzi, pinyin, English) for every HSK word and for class words that had no example in the notes','Removed the Tatoeba link; MDBG kept as the dictionary link']},
   {v:'1.5.0', d:'2026-09-07', n:['✍ Writing quiz: 10 words from the current view; you see the meaning and write each character from memory (pinyin hidden by default, Reveal outline costs 3 mistakes)','✒ Pen only toggle in practice: finger touches are ignored so your palm can rest on the tablet','Stats & goal (footer, or the Today badge): daily goal ring, streak, 13-week heatmap, totals','Daily reminder notification at a time you choose when the goal is not met','Activity log synced through the Gist']},
   {v:'1.4.1', d:'2026-09-07', n:['Free write: faint model is now full size and shows only while you hold the 👁 button']},
   {v:'1.4.0', d:'2026-09-07', n:['Free write mode: blank grid, no checking; Save & next stores your writing and clears the grid','Gallery of your last 10 attempts per character next to the printed model, with dates; tap to enlarge, × to delete','Optional faint model behind the grid (off by default)','Free writes and practice counts now sync through the Gist too']},
@@ -496,9 +503,12 @@ function openWord(e){
   } else if(e.b){
     dx.innerHTML=`<p class="exh">Character by character:</p><table class="break">`+e.b.map(r=>`<tr><td class="h">${r[0]}</td><td class="p">${r[1]}</td><td class="g">${esc(r[2])}</td></tr>`).join('')+`</table>`;
   } else dx.innerHTML='';
+  const EXD=window.EX_DATA||{}; const exs=EXD[e.w];
+  if(exs && exs.length){
+    dx.innerHTML+=`<p class="exh">Example sentences:</p><ul class="exlist">`+exs.map(x=>`<li><span class="exzh">${esc(x.zh).replace(esc(e.w),'<mark>'+esc(e.w)+'</mark>')}</span><span class="expy">${esc(x.py)}</span><span class="exen">${esc(x.en)}</span></li>`).join('')+`</ul>`;
+  }
   $('toggleKnown').textContent = known.has(e.w) ? 'Still learning ↺' : 'I know this ✓';
   $('mdbg').href='https://www.mdbg.net/chinese/dictionary?wdqb='+encodeURIComponent(e.w);
-  $('tato').href='https://tatoeba.org/en/sentences/search?from=cmn&to=eng&query='+encodeURIComponent(e.w);
   sheet.classList.add('open');
 }
 function closeSheet(){sheet.classList.remove('open'); document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel')); cur=null;}
@@ -650,6 +660,7 @@ $('pentog').onclick=()=>setPen(!penOnly); setPen(penOnly);
 ['touchstart','touchmove','touchend'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(!penOnly) return; const tt=ev.changedTouches&&ev.changedTouches[0]; if(tt && tt.touchType!=='stylus'){ ev.stopPropagation(); ev.preventDefault(); } },{capture:true,passive:false}));
 ['pointerdown','pointermove','pointerup'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(penOnly && ev.pointerType==='touch') ev.stopPropagation(); },{capture:true}));
 const HWD=window.HW_DATA||{};
+const charSVG=(c,color)=>{ const d=HWD[c]; if(!d) return `<span style="font-family:'Kaiti SC','KaiTi',serif">${c}</span>`; return `<svg viewBox="0 0 1024 1024" style="width:100%;height:100%;display:block"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map(p=>`<path d="${p}" fill="${color}"/>`).join('')}</g></svg>`; };
 function openPractice(e){
   if(typeof HanziWriter==='undefined'){ alert('Writing module not loaded yet. Reload once online.'); return; }
   pw=e; pchars=[...e.w].filter(c=>/[\u4e00-\u9fff]/.test(c)); if(!pchars.length) return;
@@ -703,7 +714,7 @@ function loadChar(){
     strokeAnimationSpeed:1, delayBetweenStrokes:250, highlightColor:'#e05a52',
     charDataLoader:(ch,done)=>{ if(HWD[ch]) done(HWD[ch]); else fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(ch)+'.json').then(r=>r.json()).then(done).catch(()=>$('phint').textContent='No stroke data for '+ch); }});
   $('ptotal').textContent=HWD[c]?HWD[c].strokes.length:'?'; $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
-  drawReps(c); $('fwmodel').textContent=c; $('fwmodel').style.fontSize=Math.round(size*0.8)+'px'; drawGal(c); fwReset(); runMode();
+  drawReps(c); $('fwmodel').innerHTML=charSVG(c,'#d8d8d8'); drawGal(c); fwReset(); runMode();
 }
 function drawReps(c){ const n=preps[c]||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
 function runMode(){
@@ -754,7 +765,7 @@ const svgOf=(att,cls)=>`<svg viewBox="0 0 1000 1000">${att.d.map(p=>`<polyline p
 const fmtD=t=>{ const d=new Date(t), now=new Date(); return d.toDateString()===now.toDateString()?'today':d.toLocaleDateString([], {month:'short',day:'numeric'}); };
 function drawGal(c){
   const list=fws[c]||[]; $('galc').textContent=c; $('galn').textContent=list.length;
-  $('galgrid').innerHTML=`<div class="galcell model">${c}</div>`+list.map((a,i)=>`<div class="galcell" data-i="${i}">${svgOf(a)}<small>${fmtD(a.t)}</small><span class="del" data-del="${i}" title="Delete">×</span></div>`).join('')+
+  $('galgrid').innerHTML=`<div class="galcell model" style="padding:8%">${charSVG(c,'var(--ink)')}</div>`+list.map((a,i)=>`<div class="galcell" data-i="${i}">${svgOf(a)}<small>${fmtD(a.t)}</small><span class="del" data-del="${i}" title="Delete">×</span></div>`).join('')+
     Array.from({length:Math.max(0,10-list.length)},(_,i)=>`<div class="galcell empty">${list.length+i+1}</div>`).join('');
 }
 $('galgrid').addEventListener('click',ev=>{
