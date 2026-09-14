@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>词汇墙 · HSK Word Wall</title>
+<title>Hanzi Practice</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c3272b">
 <link rel="icon" href="icon-192.png">
@@ -362,8 +362,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.5.3';
 const CHANGELOG = [
+  {v:'1.5.3', d:'2026-09-14', n:['Renamed the app to Hanzi Practice','Installs from the custom domain at the site root']},
   {v:'1.5.2', d:'2026-09-14', n:['Free write: the faint model and the gallery model are now drawn from the same stroke data as Trace / Write, so all three match exactly']},
   {v:'1.5.1', d:'2026-09-08', n:['Two example sentences (hanzi, pinyin, English) for every HSK word and for class words that had no example in the notes','Removed the Tatoeba link; MDBG kept as the dictionary link']},
   {v:'1.5.0', d:'2026-09-07', n:['✍ Writing quiz: 10 words from the current view; you see the meaning and write each character from memory (pinyin hidden by default, Reveal outline costs 3 mistakes)','✒ Pen only toggle in practice: finger touches are ignored so your palm can rest on the tablet','Stats & goal (footer, or the Today badge): daily goal ring, streak, 13-week heatmap, totals','Daily reminder notification at a time you choose when the goal is not met','Activity log synced through the Gist']},
@@ -421,7 +422,7 @@ function streak(){ const days=new Set(LOG.map(e=>dayKey(e.t))); let n=0, d=new D
 const main=$('main'), nav=$('lvlnav'), notesEl=$('notes');
 function build(){
   S=SETS[MODE]; known=loadKnown(S.key); const other=loadKnown(SETS[MODE==='hsk'?'cls':'hsk'].key); S.words.forEach(e=>{ if(other.has(e.w)) known.add(e.w); }); cur=null; closeSheet();
-  document.title=(MODE==='cls'?'课堂词汇':'词汇墙')+' · HSK Word Wall';
+  document.title=(MODE==='cls'?'课堂词汇':'词汇墙')+' · Hanzi Practice';
   $('ttl').textContent=S.title; $('sub').textContent=S.sub;
   document.querySelectorAll('#modeseg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===MODE));
   $('impbtn').classList.toggle('hidden', MODE!=='cls');

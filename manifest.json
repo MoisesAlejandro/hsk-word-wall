@@ -1,7 +1,8 @@
 {
-  "name": "HSK Word Wall",
-  "short_name": "词汇墙",
-  "start_url": "./index.html",
+  "name": "Hanzi Practice",
+  "short_name": "Hanzi",
+  "id": "/",
+  "start_url": "/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#fbfbf7",
