@@ -162,6 +162,7 @@
   #fw{position:absolute; inset:0; width:100%; height:100%; display:none; touch-action:none}
   #fw.on{display:block}
   #fw polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
+  #fw path.bk{fill:#2b5fb8; stroke:none}
   #fwmodel{position:absolute; inset:8%; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
   #fwmodel.on{display:flex}
   .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
@@ -176,6 +177,7 @@
   .galcell{aspect-ratio:1; border:1px solid var(--rule); border-radius:4px; background:var(--panel); position:relative; cursor:pointer; overflow:hidden}
   .galcell svg{width:100%; height:100%; display:block}
   .galcell polyline{fill:none; stroke:#2b5fb8; stroke-width:40; stroke-linecap:round; stroke-linejoin:round}
+  .galcell path.bk{fill:#2b5fb8; stroke:none}
   .galcell small{position:absolute; bottom:1px; right:3px; font-size:9px; color:var(--faint)}
   .galcell.model{display:flex; align-items:center; justify-content:center; font-size:38px; border-color:var(--ink); font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif}
   .galcell.empty{display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:12px; cursor:default}
@@ -184,6 +186,7 @@
   #galbig::backdrop{background:rgba(0,0,0,.45)}
   #galbig svg{width:min(80vw,440px); height:min(80vw,440px); display:block; border:2px solid #2e9e5b; border-radius:6px}
   #galbig polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
+  #galbig path.bk{fill:#2b5fb8; stroke:none}
   /* quiz */
   #pquiz{display:none; margin:6px 0 10px; padding:10px 12px; border:1px solid var(--rule); border-radius:10px; background:var(--panel)}
   #pquiz.on{display:block}
@@ -347,8 +350,11 @@
   .reps span{width:40px; height:40px; font-size:22px}
   .reps span.ok{background:var(--seal-soft)}
   #fw polyline{stroke:var(--draw)}
+  #fw path.bk{fill:var(--draw)}
   .galcell polyline{stroke:var(--draw)}
+  .galcell path.bk{fill:var(--draw)}
   #galbig polyline{stroke:var(--draw)}
+  #galbig path.bk{fill:var(--draw)}
   #galbig svg{border-color:var(--guide)}
   #fwmodel{color:var(--outline)}
   .pinfo{display:none}
@@ -477,6 +483,7 @@
   </section>
   <section class="sgrp"><h3>Writing</h3>
     <label class="srowlab"><input type="checkbox" id="penset"><span>Pen only — finger touches are ignored so your palm can rest on the tablet</span></label>
+    <label class="srowlab"><input type="checkbox" id="brushset"><span>Brush ink — free write strokes thicken and taper like a calligraphy brush, using stylus pressure where available</span></label>
   </section>
   <section class="sgrp"><h3>Reading</h3>
     <div class="seg" id="wsseg" role="group" aria-label="Character size on the wall">
@@ -630,8 +637,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.12.1';
+const APP_VERSION = '1.13.0';
 const CHANGELOG = [
+  {v:'1.13.0', d:'2026-09-14', n:['Brush ink: an optional free-write style where strokes thicken, thin and taper like a calligraphy brush, using stylus pressure and pen speed','Turn it on in Settings > Writing. Off by default, and saved attempts keep the look they were drawn with']},
   {v:'1.12.1', d:'2026-09-14', n:['Added 43 words missing from the official HSK lists, including 说, 没有, 因为, 所以, 但是, 中文 and 聊天','Word count is now 4,995, matching the official HSK 1\u20136 lists exactly','Cleaned dictionary cross-references out of 12 definitions']},
   {v:'1.12.0', d:'2026-09-14', n:['Example sentences for every HSK 6 word: 4,992 new sentences with pinyin and English','Every word in the app, HSK 1\u20136, now has two example sentences']},
   {v:'1.11.0', d:'2026-09-14', n:['Example sentences for every HSK 5 word: 2,582 new sentences with pinyin and English','HSK 6 example sentences still to come']},
@@ -1020,6 +1028,9 @@ let penOnly=localStorage.getItem('hskwall.penonly')==='1';
 let QZ=null; // {queue:[words], i, results:[{w,miss,skipped}], showpy, miss}
 function setPen(v){ penOnly=v; localStorage.setItem('hskwall.penonly',v?'1':'0'); $('pentog').setAttribute('aria-pressed',v); $('penset').checked=v; }
 $('pentog').onclick=()=>setPen(!penOnly); $('penset').onchange=()=>setPen($('penset').checked); setPen(penOnly);
+let brushIn=localStorage.getItem('hskwall.brush')==='1';
+function setBrush(v){ brushIn=v; localStorage.setItem('hskwall.brush',v?'1':'0'); $('brushset').checked=v; }
+$('brushset').onchange=()=>setBrush($('brushset').checked); setBrush(brushIn);
 // block finger touches before they reach Hanzi Writer's SVG (Apple Pencil = touchType 'stylus'; other styluses use pointerType 'pen')
 ['touchstart','touchmove','touchend'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(!penOnly) return; const tt=ev.changedTouches&&ev.changedTouches[0]; if(tt && tt.touchType!=='stylus'){ ev.stopPropagation(); ev.preventDefault(); } },{capture:true,passive:false}));
 ['pointerdown','pointermove','pointerup'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(penOnly && ev.pointerType==='touch') ev.stopPropagation(); },{capture:true}));
@@ -1143,20 +1154,90 @@ addEventListener('resize',()=>{
 });
 $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice(); });
 
+/* ---------- brush ink: variable-width stroke outlines ----------
+   Width comes from stylus pressure (where the device reports it), pen speed, and a
+   taper at each tip so strokes enter and leave the way a brush does. A stroke is
+   stored as its points plus one width factor per point (4-130, x/100 of BRUSH_BASE),
+   so a saved attempt replays exactly as it was drawn and old attempts (no factors)
+   keep rendering as plain polylines. */
+const BRUSH_BASE=26, BRUSH_VMAX=2.6;
+function brushFacs(flat,prs,ts){
+  const n=flat.length/2; if(n<1) return [];
+  const raw=[];
+  for(let i=0;i<n;i++){
+    const j=Math.max(0,i-1);
+    const dt=Math.max(1,(ts[i]||0)-(ts[j]||0));
+    const d=Math.hypot(flat[i*2]-flat[j*2], flat[i*2+1]-flat[j*2+1]);
+    const v=Math.min(1,(d/dt)/BRUSH_VMAX);
+    const pr=(prs[i]==null)?0.5:prs[i];
+    raw.push(Math.max(0.12,(0.30+1.25*pr)*(1-0.55*v)));
+  }
+  const sm=raw.map((_,i)=>{ let a=0,c=0; for(let j=Math.max(0,i-2);j<=Math.min(n-1,i+2);j++){a+=raw[j];c++;} return a/c; });
+  const L=[0]; let tot=0;
+  for(let i=1;i<n;i++){ tot+=Math.hypot(flat[i*2]-flat[(i-1)*2], flat[i*2+1]-flat[(i-1)*2+1]); L.push(tot); }
+  if(tot>0){
+    const head=Math.min(tot*0.30,34), tail=Math.min(tot*0.42,66);
+    for(let i=0;i<n;i++){
+      let f=1;
+      if(L[i]<head) f=Math.min(f,0.30+0.70*(L[i]/head));
+      const rest=tot-L[i];
+      if(rest<tail) f=Math.min(f,0.06+0.94*(rest/tail));
+      sm[i]*=f;
+    }
+  }
+  return sm.map(x=>Math.max(4,Math.min(130,Math.round(x*100))));
+}
+function brushPath(flat,facs){
+  const n=flat.length/2; if(n<2||!facs||!facs.length) return '';
+  const L=[],R=[], r=x=>Math.round(x*10)/10;
+  for(let i=0;i<n;i++){
+    const a=Math.max(0,i-1), b=Math.min(n-1,i+1);
+    const dx=flat[b*2]-flat[a*2], dy=flat[b*2+1]-flat[a*2+1];
+    const len=Math.hypot(dx,dy)||1;
+    const h=BRUSH_BASE*((facs[i]==null?50:facs[i])/100)/2;
+    const nx=-dy/len*h, ny=dx/len*h, x=flat[i*2], y=flat[i*2+1];
+    L.push([x+nx,y+ny]); R.push([x-nx,y-ny]);
+  }
+  let d='M'+r(L[0][0])+','+r(L[0][1]);
+  for(let i=1;i<L.length-1;i++) d+='Q'+r(L[i][0])+','+r(L[i][1])+' '+r((L[i][0]+L[i+1][0])/2)+','+r((L[i][1]+L[i+1][1])/2);
+  d+='L'+r(L[n-1][0])+','+r(L[n-1][1])+'L'+r(R[n-1][0])+','+r(R[n-1][1]);
+  for(let i=R.length-2;i>0;i--) d+='Q'+r(R[i][0])+','+r(R[i][1])+' '+r((R[i][0]+R[i-1][0])/2)+','+r((R[i][1]+R[i-1][1])/2);
+  return d+'L'+r(R[0][0])+','+r(R[0][1])+'Z';
+}
+const SVGNS='http://www.w3.org/2000/svg';
+
 /* ---------- free write ---------- */
 const FKEY='hskwall.freewrite.v1';
 // Gallery cap: fwCap() above — 10 attempts free, 20 with premium.
 let fws=JSON.parse(localStorage.getItem(FKEY)||'{}'); // {char:[{d:[[x,y,x,y..]..],t:ms}]}
-let fwStrokes=[], fwCur=null;
+let fwStrokes=[], fwFacs=[], fwCur=null;
 const fwEl=$('fw');
 const fwSave=()=>{ localStorage.setItem(FKEY,JSON.stringify(fws)); syncPush(); };
-function fwPt(ev){ const r=fwEl.getBoundingClientRect(); return [Math.round((ev.clientX-r.left)/r.width*1000), Math.round((ev.clientY-r.top)/r.height*1000)]; }
-fwEl.addEventListener('pointerdown',ev=>{ if(pmode!=='free') return; if(penOnly && ev.pointerType==='touch') return; ev.preventDefault(); fwEl.setPointerCapture(ev.pointerId); fwCur=document.createElementNS('http://www.w3.org/2000/svg','polyline'); fwCur._pts=fwPt(ev); fwCur.setAttribute('points',fwCur._pts.join(',')); fwEl.appendChild(fwCur); });
-fwEl.addEventListener('pointermove',ev=>{ if(!fwCur) return; ev.preventDefault(); const p=fwPt(ev); fwCur._pts.push(...p); fwCur.setAttribute('points',fwCur._pts.join(',')); });
-const fwEnd=ev=>{ if(!fwCur) return; if(fwCur._pts.length<4) fwCur._pts.push(fwCur._pts[0]+1,fwCur._pts[1]+1), fwCur.setAttribute('points',fwCur._pts.join(',')); fwStrokes.push(fwCur._pts); fwCur=null; };
+function fwPt(ev){ const r=fwEl.getBoundingClientRect(); if(!r.width||!r.height) return [0,0]; return [Math.round((ev.clientX-r.left)/r.width*1000), Math.round((ev.clientY-r.top)/r.height*1000)]; }
+const fwPr=ev=>(ev.pointerType==='pen'&&ev.pressure>0&&ev.pressure!==0.5)?ev.pressure:null;
+function fwRender(){
+  if(!fwCur) return;
+  if(fwCur._bk){ fwCur._fac=brushFacs(fwCur._pts,fwCur._prs,fwCur._ts); fwCur.setAttribute('d',brushPath(fwCur._pts,fwCur._fac)); }
+  else fwCur.setAttribute('points',fwCur._pts.join(','));
+}
+fwEl.addEventListener('pointerdown',ev=>{ if(pmode!=='free') return; if(penOnly && ev.pointerType==='touch') return; ev.preventDefault(); fwEl.setPointerCapture(ev.pointerId);
+  const bk=brushIn;
+  fwCur=document.createElementNS(SVGNS,bk?'path':'polyline'); fwCur._bk=bk;
+  if(bk) fwCur.setAttribute('class','bk');
+  fwCur._pts=fwPt(ev); fwCur._prs=[fwPr(ev)]; fwCur._ts=[performance.now()];
+  fwRender(); fwEl.appendChild(fwCur); });
+fwEl.addEventListener('pointermove',ev=>{ if(!fwCur) return; ev.preventDefault();
+  let evs=[ev]; if(fwCur._bk && ev.getCoalescedEvents){ const co=ev.getCoalescedEvents(); if(co&&co.length) evs=co; }
+  for(const e of evs){ fwCur._pts.push(...fwPt(e)); fwCur._prs.push(fwPr(e)); fwCur._ts.push(performance.now()); }
+  fwRender(); });
+const fwEnd=ev=>{ if(!fwCur) return;
+  if(fwCur._pts.length<4){ fwCur._pts.push(fwCur._pts[0]+1,fwCur._pts[1]+1); fwCur._prs.push(fwCur._prs[0]); fwCur._ts.push(fwCur._ts[0]+16); }
+  fwRender();
+  fwStrokes.push(fwCur._pts); fwFacs.push(fwCur._bk?fwCur._fac:null);
+  fwCur=null; };
 fwEl.addEventListener('pointerup',fwEnd); fwEl.addEventListener('pointercancel',fwEnd);
-function fwReset(){ fwStrokes=[]; fwCur=null; fwEl.innerHTML=''; }
-$('fwundo').onclick=()=>{ fwStrokes.pop(); if(fwEl.lastChild) fwEl.removeChild(fwEl.lastChild); };
+function fwReset(){ fwStrokes=[]; fwFacs=[]; fwCur=null; fwEl.innerHTML=''; }
+$('fwundo').onclick=()=>{ fwStrokes.pop(); fwFacs.pop(); if(fwEl.lastChild) fwEl.removeChild(fwEl.lastChild); };
 $('fwclear').onclick=fwReset;
 const ghostOn=ev=>{ ev.preventDefault(); $('fwmodel').classList.add('on'); }, ghostOff=()=>$('fwmodel').classList.remove('on');
 $('fwghost').addEventListener('pointerdown',ghostOn);
@@ -1164,10 +1245,10 @@ $('fwghost').addEventListener('pointerdown',ghostOn);
 $('fwghost').addEventListener('contextmenu',ev=>ev.preventDefault());
 $('fwsave').onclick=()=>{
   if(!fwStrokes.length){ $('phint').textContent='Nothing to save yet.'; return; }
-  const c=pchars[pidx]; (fws[c]=fws[c]||[]).push({d:fwStrokes,t:Date.now()}); if(fws[c].length>fwCap()) fws[c]=fws[c].slice(-fwCap());
+  const c=pchars[pidx]; const att={d:fwStrokes,t:Date.now()}; if(fwFacs.some(Boolean)) att.f=fwFacs; (fws[c]=fws[c]||[]).push(att); if(fws[c].length>fwCap()) fws[c]=fws[c].slice(-fwCap());
   fwSave(); fwReset(); drawGal(c); logEv('free',c); $('phint').textContent='Saved · attempt '+fws[c].length+' of '+fwCap();
 };
-const svgOf=(att,cls)=>`<svg viewBox="0 0 1000 1000">${att.d.map(p=>`<polyline points="${p.join(',')}"/>`).join('')}</svg>`;
+const svgOf=(att,cls)=>`<svg viewBox="0 0 1000 1000">${att.d.map((p,i)=>(att.f&&att.f[i])?`<path class="bk" d="${brushPath(p,att.f[i])}"/>`:`<polyline points="${p.join(',')}"/>`).join('')}</svg>`;
 const fmtD=t=>{ const d=new Date(t), now=new Date(); return d.toDateString()===now.toDateString()?'today':d.toLocaleDateString([], {month:'short',day:'numeric'}); };
 function drawGal(c){
   const list=fws[c]||[]; $('galc').textContent=c; $('galn').textContent=list.length; $('galcap').textContent=fwCap();

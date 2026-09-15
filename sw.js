@@ -1,5 +1,5 @@
-// Hanzi Practice v1.12.1
-const C = 'hskwall-v23';
+// Hanzi Practice v1.13.0
+const C = 'hskwall-v24';
 const ASSETS = ['./', './index.html', './manifest.json', './hanzi-writer.min.js', './strokes-data.js', './examples.js', './privacy.html', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
