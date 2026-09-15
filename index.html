@@ -163,6 +163,8 @@
   #fw.on{display:block}
   #fw polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
   #fw path.bk{fill:#2b5fb8; stroke:none}
+  #bspreview{display:block; width:100%; height:auto; margin-top:8px; border:1px solid var(--rule); border-radius:8px; background:var(--paper)}
+  #bspreview path.bk{fill:var(--draw)}
   #fwmodel{position:absolute; inset:8%; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
   #fwmodel.on{display:flex}
   .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
@@ -484,6 +486,16 @@
   <section class="sgrp"><h3>Writing</h3>
     <label class="srowlab"><input type="checkbox" id="penset"><span>Pen only — finger touches are ignored so your palm can rest on the tablet</span></label>
     <label class="srowlab"><input type="checkbox" id="brushset"><span>Brush ink — free write strokes thicken and taper like a calligraphy brush, using stylus pressure where available</span></label>
+    <div id="bswrap" class="hidden" style="margin:2px 0 4px">
+      <div class="seg" id="bsseg" role="group" aria-label="Brush size">
+        <button data-bs="28" aria-pressed="false">Fine</button>
+        <button data-bs="40" aria-pressed="true">Medium</button>
+        <button data-bs="54" aria-pressed="false">Thick</button>
+        <button data-bs="70" aria-pressed="false">Bold</button>
+      </div>
+      <svg id="bspreview" viewBox="0 0 1000 300" aria-label="Preview of the brush size"><path class="bk"/></svg>
+      <p class="exh" style="margin:4px 0 0">Applies to new strokes and to saved brush attempts in the gallery.</p>
+    </div>
   </section>
   <section class="sgrp"><h3>Reading</h3>
     <div class="seg" id="wsseg" role="group" aria-label="Character size on the wall">
@@ -637,8 +649,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.13.1';
+const APP_VERSION = '1.14.0';
 const CHANGELOG = [
+  {v:'1.14.0', d:'2026-09-14', n:['Brush size: Fine / Medium / Thick / Bold, in Settings > Writing, with a live preview','The size applies to new strokes and to saved brush attempts in the gallery']},
   {v:'1.13.1', d:'2026-09-14', n:['Brush ink strokes are noticeably thicker']},
   {v:'1.13.0', d:'2026-09-14', n:['Brush ink: an optional free-write style where strokes thicken, thin and taper like a calligraphy brush, using stylus pressure and pen speed','Turn it on in Settings > Writing. Off by default, and saved attempts keep the look they were drawn with']},
   {v:'1.12.1', d:'2026-09-14', n:['Added 43 words missing from the official HSK lists, including 说, 没有, 因为, 所以, 但是, 中文 and 聊天','Word count is now 4,995, matching the official HSK 1\u20136 lists exactly','Cleaned dictionary cross-references out of 12 definitions']},
@@ -1030,8 +1043,9 @@ let QZ=null; // {queue:[words], i, results:[{w,miss,skipped}], showpy, miss}
 function setPen(v){ penOnly=v; localStorage.setItem('hskwall.penonly',v?'1':'0'); $('pentog').setAttribute('aria-pressed',v); $('penset').checked=v; }
 $('pentog').onclick=()=>setPen(!penOnly); $('penset').onchange=()=>setPen($('penset').checked); setPen(penOnly);
 let brushIn=localStorage.getItem('hskwall.brush')==='1';
-function setBrush(v){ brushIn=v; localStorage.setItem('hskwall.brush',v?'1':'0'); $('brushset').checked=v; }
+function setBrush(v){ brushIn=v; localStorage.setItem('hskwall.brush',v?'1':'0'); $('brushset').checked=v; $('bswrap').classList.toggle('hidden',!v); }
 $('brushset').onchange=()=>setBrush($('brushset').checked); setBrush(brushIn);
+
 // block finger touches before they reach Hanzi Writer's SVG (Apple Pencil = touchType 'stylus'; other styluses use pointerType 'pen')
 ['touchstart','touchmove','touchend'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(!penOnly) return; const tt=ev.changedTouches&&ev.changedTouches[0]; if(tt && tt.touchType!=='stylus'){ ev.stopPropagation(); ev.preventDefault(); } },{capture:true,passive:false}));
 ['pointerdown','pointermove','pointerup'].forEach(t=>$('hw').addEventListener(t,ev=>{ if(penOnly && ev.pointerType==='touch') ev.stopPropagation(); },{capture:true}));
@@ -1161,7 +1175,8 @@ $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice()
    stored as its points plus one width factor per point (4-130, x/100 of BRUSH_BASE),
    so a saved attempt replays exactly as it was drawn and old attempts (no factors)
    keep rendering as plain polylines. */
-const BRUSH_BASE=40, BRUSH_VMAX=2.6;
+const BSKEY='hskwall.brushsize', BRUSH_VMAX=2.6;
+let BRUSH_BASE=Math.min(70,Math.max(28,parseInt(localStorage.getItem(BSKEY),10)||40));
 function brushFacs(flat,prs,ts){
   const n=flat.length/2; if(n<1) return [];
   const raw=[];
@@ -1206,6 +1221,24 @@ function brushPath(flat,facs){
   return d+'L'+r(R[0][0])+','+r(R[0][1])+'Z';
 }
 const SVGNS='http://www.w3.org/2000/svg';
+// a sample 捺 (right-falling): thin entry, swelling belly, lifted foot — the stroke
+// where brush size reads most clearly
+const BS_SAMPLE=(()=>{ const pts=[],prs=[],ts=[];
+  for(let i=0;i<=26;i++){ const t=i/26;
+    pts.push(120+760*t, 70+150*Math.pow(t,1.25));
+    prs.push(0.18+0.80*Math.sin(Math.PI*Math.min(1,t*1.05)));
+    ts.push(i*26); }
+  return {pts,prs,ts}; })();
+function applyBrushSize(v){
+  BRUSH_BASE=Math.min(70,Math.max(28,parseInt(v,10)||40));
+  localStorage.setItem(BSKEY,String(BRUSH_BASE));
+  document.querySelectorAll('#bsseg button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.bs===BRUSH_BASE));
+  const p=$('bspreview')&&$('bspreview').querySelector('path');
+  if(p) p.setAttribute('d', brushPath(BS_SAMPLE.pts, brushFacs(BS_SAMPLE.pts,BS_SAMPLE.prs,BS_SAMPLE.ts)));
+  if(typeof pchars!=='undefined' && typeof pidx!=='undefined' && pchars[pidx] && $('galgrid').children.length) drawGal(pchars[pidx]);
+}
+document.querySelectorAll('#bsseg button').forEach(b=>b.onclick=()=>applyBrushSize(b.dataset.bs));
+applyBrushSize(BRUSH_BASE);
 
 /* ---------- free write ---------- */
 const FKEY='hskwall.freewrite.v1';
