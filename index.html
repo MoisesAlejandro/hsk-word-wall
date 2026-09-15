@@ -637,8 +637,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.13.1';
 const CHANGELOG = [
+  {v:'1.13.1', d:'2026-09-14', n:['Brush ink strokes are noticeably thicker']},
   {v:'1.13.0', d:'2026-09-14', n:['Brush ink: an optional free-write style where strokes thicken, thin and taper like a calligraphy brush, using stylus pressure and pen speed','Turn it on in Settings > Writing. Off by default, and saved attempts keep the look they were drawn with']},
   {v:'1.12.1', d:'2026-09-14', n:['Added 43 words missing from the official HSK lists, including 说, 没有, 因为, 所以, 但是, 中文 and 聊天','Word count is now 4,995, matching the official HSK 1\u20136 lists exactly','Cleaned dictionary cross-references out of 12 definitions']},
   {v:'1.12.0', d:'2026-09-14', n:['Example sentences for every HSK 6 word: 4,992 new sentences with pinyin and English','Every word in the app, HSK 1\u20136, now has two example sentences']},
@@ -1160,7 +1161,7 @@ $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice()
    stored as its points plus one width factor per point (4-130, x/100 of BRUSH_BASE),
    so a saved attempt replays exactly as it was drawn and old attempts (no factors)
    keep rendering as plain polylines. */
-const BRUSH_BASE=26, BRUSH_VMAX=2.6;
+const BRUSH_BASE=40, BRUSH_VMAX=2.6;
 function brushFacs(flat,prs,ts){
   const n=flat.length/2; if(n<1) return [];
   const raw=[];
