@@ -401,6 +401,18 @@
   table.break td.p, .expy{color:var(--py)}
   .heat i.l1{background:var(--seal-soft)} .heat i.l2{background:#e58b84}
   .attrib{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+  /* premium */
+  .lvlocked .chip{opacity:.5}
+  .lvlocked .chip::before{content:"🔒"; position:absolute; top:2px; left:3px; font-size:9px; line-height:1; filter:grayscale(1); opacity:.6}
+  .lvlocked .chip .hsktag{display:none}
+  .lockbtn{margin-left:auto; border:1px solid var(--seal); background:var(--seal-soft); color:var(--seal); border-radius:6px; padding:3px 10px; font-size:12px; cursor:pointer; white-space:nowrap}
+  #paydlg{border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); padding:0; max-width:420px; width:calc(100% - 32px)}
+  #paydlg::backdrop{background:rgba(0,0,0,.35)}
+  .paylist{margin:0 0 12px; padding-left:20px; font-size:14px}
+  .paylist li{padding:2px 0}
+  .payopts{display:grid; gap:8px}
+  .payopts .btn{display:flex; flex-direction:column; gap:2px; align-items:center}
+  .payopts .btn small{font-size:12px; font-weight:400; opacity:.85}
 </style>
 </head>
 <body>
@@ -435,7 +447,7 @@
 <div id="pracview" class="view hidden">
   <h2 class="vhd">Practice</h2>
   <div class="cards">
-    <button class="card" id="cardquiz"><b>✍ Writing quiz</b><span>Ten words from the current wall view. You see the meaning and write each character from memory.</span></button>
+    <button class="card" id="cardquiz"><b>✍ Writing quiz</b><span id="quizsub">Ten words from the current wall view. You see the meaning and write each character from memory.</span></button>
     <button class="card" id="cardfree"><b>🖌 Free write</b><span>A blank 田字格 with no checking. Save each attempt and compare your last ten.</span></button>
     <button class="card" id="cardlast"><b>↺ Continue last character</b><span id="lastsub">Nothing practised yet.</span></button>
   </div>
@@ -490,6 +502,13 @@
       <button class="btn ghost" id="reset" type="button">Reset all</button>
     </div>
     <p class="exh" id="stats" style="margin:6px 0 0"></p>
+  </section>
+  <section class="sgrp hidden" id="premgrp"><h3>Premium</h3>
+    <p class="exh" id="premstat" style="margin:0 0 8px"></p>
+    <div class="sset">
+      <button class="btn" id="prembtn" type="button">Go Premium</button>
+      <button class="btn ghost" id="premrestore" type="button">Restore purchases</button>
+    </div>
   </section>
   <details class="sgrp"><summary>Advanced</summary>
     <div class="sset" style="margin-top:8px"><button class="btn ghost" id="syncbtn" type="button">Sync across devices</button><span id="syncstat" class="exh"></span></div>
@@ -575,6 +594,27 @@
     </div>
   </form>
 </dialog>
+<dialog id="paydlg">
+  <form method="dialog" class="syncin">
+    <h3 style="margin:0 0 4px">Hanzi Practice Premium</h3>
+    <p class="exh" id="paywhy" style="margin:0 0 10px"></p>
+    <ul class="paylist">
+      <li>Every HSK level on the wall</li>
+      <li>Unlimited writing quizzes</li>
+      <li>A larger free-write gallery for every character</li>
+    </ul>
+    <div class="payopts">
+      <button class="btn primary" type="button" id="payyear">Yearly · $19.99<small>7-day free trial, cancel any time</small></button>
+      <button class="btn ghost" type="button" id="paylife">Lifetime · $39.99<small>one-time purchase</small></button>
+    </div>
+    <p id="paymsg" class="exh" style="min-height:1.2em; margin:8px 0 0"></p>
+    <p class="exh" style="margin:2px 0 0; font-size:12px; color:var(--faint)">Payments are handled by Google Play or the App Store. No ads, no account — your progress stays on your device.</p>
+    <div class="actions" style="margin-top:6px">
+      <button class="linklike" type="button" id="payrestore">Restore purchases</button>
+      <button class="btn ghost" type="submit" style="margin-left:auto">Not now</button>
+    </div>
+  </form>
+</dialog>
 <dialog id="verdlg">
   <form method="dialog" class="syncin">
     <h3 style="margin:0 0 10px">Version history</h3>
@@ -590,8 +630,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.8.2';
+const APP_VERSION = '1.8.3';
 const CHANGELOG = [
+  {v:'1.8.3', d:'2026-09-14', n:['Groundwork for the upcoming Premium plan: plan sheet, HSK level unlocks, quiz allowance and Restore purchases are all in place for the store apps','Nothing changes on the web: everything stays unlocked until the Android / iOS apps with billing arrive']},
   {v:'1.8.2', d:'2026-09-14', n:['Free write gallery size now follows your plan: 10 attempts per character, 20 with the upcoming Premium']},
   {v:'1.8.1', d:'2026-09-14', n:['Privacy policy page, linked from the footer']},
   {v:'1.8.0', d:'2026-09-14', n:[
@@ -678,6 +719,16 @@ const save = (w,val)=>{
 };
 const loadKnown = key=>new Set(JSON.parse(localStorage.getItem(key)||'[]'));
 
+/* ---------- premium (docs/STATUS.md: HSK 1 free; D3: 5 free quiz words/day; single isPremium flag, set by RevenueCat in the store builds).
+   Gates stay OFF until billing ships: hskwall.gates='1' turns them on (test flag; store builds will default it on). */
+const PREMK='hskwall.premium', GATEK='hskwall.gates';
+const FREE_MAX_LVL=1, FREE_QUIZ_WORDS=5;
+const isPremium=()=>{ try{ return localStorage.getItem(PREMK)==='1'; }catch(e){ return false; } };
+const gatesOn=()=>{ try{ return localStorage.getItem(GATEK)==='1'; }catch(e){ return false; } };
+const gated=()=>gatesOn() && !isPremium();
+const lvlLocked=l=>MODE==='hsk' && gated() && l>FREE_MAX_LVL && l!==0;
+const fwCap=()=>isPremium()?20:10;
+
 /* ---------- activity log, goal, streak ---------- */
 const LOGK='hskwall.log.v1', GOALK='hskwall.goal', REMK='hskwall.remind';
 let LOG=JSON.parse(localStorage.getItem(LOGK)||'[]'); // [{t,k,w}] k: known|write|quiz|free
@@ -726,7 +777,8 @@ function build(){
   S.order.forEach(l=>{
     const list=byLvl[l]; if(!list||!list.length) return;
     const sec=document.createElement('section'); sec.id=S.anchor(l);
-    sec.innerHTML=`<div class="lvlhead"><h2>${S.label(l)}</h2><span class="count" id="c${l}"></span></div>`;
+    const lk=lvlLocked(l); if(lk) sec.classList.add('lvlocked');
+    sec.innerHTML=`<div class="lvlhead"><h2>${S.label(l)}</h2><span class="count" id="c${l}"></span>${lk?'<button class="lockbtn" type="button">🔒 Premium</button>':''}</div>`;
     const g=document.createElement('div'); g.className='grid';
     list.forEach(e=>{
       const b=document.createElement('button'); b.className='chip'; b.dataset.i=e.i_;
@@ -735,7 +787,7 @@ function build(){
       g.appendChild(b); chips[e.i_]=b;
     });
     sec.appendChild(g); main.appendChild(sec);
-    const a=document.createElement('a'); a.href='#'+S.anchor(l); a.dataset.l=l; a.innerHTML=`${S.short(l)} <span class="navc" id="n${l}"></span>`; nav.appendChild(a);
+    const a=document.createElement('a'); a.href='#'+S.anchor(l); a.dataset.l=l; a.innerHTML=`${lk?'🔒 ':''}${S.short(l)} <span class="navc" id="n${l}"></span>`; nav.appendChild(a);
   });
   if(MODE==='cls') buildNotes();
   refresh(true);
@@ -782,6 +834,7 @@ document.querySelectorAll('#modeseg button').forEach(b=>b.onclick=()=>{
 /* ---------- detail sheet ---------- */
 const sheet=$('sheet');
 function openWord(e){
+  if(lvlLocked(e.l)){ openPaywall('level'); return; }
   cur=e;
   document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel'));
   if(chips[e.i_]) chips[e.i_].classList.add('sel');
@@ -820,7 +873,7 @@ $('dmore').onclick=()=>{
 function closeSheet(){sheet.classList.remove('open'); document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel')); cur=null;}
 $('closer').onclick=closeSheet;
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheet()});
-main.addEventListener('click',ev=>{ const c=ev.target.closest('.chip'); if(!c) return; openWord(S.words[+c.dataset.i]); });
+main.addEventListener('click',ev=>{ if(ev.target.closest('.lockbtn')){ openPaywall('level'); return; } const c=ev.target.closest('.chip'); if(!c) return; openWord(S.words[+c.dataset.i]); });
 $('dx').addEventListener('click',ev=>{ const b=ev.target.closest('button[data-w]'); if(!b) return; const e=S.words.find(x=>x.w===b.dataset.w); if(e) openWord(e); });
 $('toggleKnown').onclick=()=>{
   if(!cur) return;
@@ -969,6 +1022,7 @@ const HWD=window.HW_DATA||{};
 const cssv=(n,f)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||f;
 const charSVG=(c,color)=>{ const d=HWD[c]; if(!d) return `<span style="font-family:'Kaiti SC','KaiTi',serif">${c}</span>`; return `<svg viewBox="0 0 1024 1024" style="width:100%;height:100%;display:block"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map(p=>`<path d="${p}" fill="${color}"/>`).join('')}</g></svg>`; };
 function openPractice(e,startMode){
+  if(!QZ && lvlLocked(e.l)){ openPaywall('level'); return; }
   if(typeof HanziWriter==='undefined'){ alert('Writing module not loaded yet. Reload once online.'); return; }
   pw=e; pchars=[...e.w].filter(c=>/[\u4e00-\u9fff]/.test(c)); if(!pchars.length) return;
   localStorage.setItem(LASTK,e.w);
@@ -990,11 +1044,14 @@ function bindQuiz(){
 }
 bindQuiz();
 function pickQuiz(){
-  const vis=S.words.filter(e=>chips[e.i_] && !chips[e.i_].classList.contains('hidden'));
+  const left=gated()?quizLeft():10;
+  if(left<=0){ openPaywall('quiz'); return; }
+  const vis=S.words.filter(e=>chips[e.i_] && !chips[e.i_].classList.contains('hidden') && !lvlLocked(e.l));
   let pool=vis.filter(e=>!known.has(e.w)); if(pool.length<5) pool=vis;
   if(!pool.length){ alert('No words to quiz in the current view.'); return; }
-  pool=[...pool].sort(()=>Math.random()-0.5).slice(0,10);
-  QZ={queue:pool,i:0,results:[],showpy:false,miss:0}; openPractice(pool[0]);
+  pool=[...pool].sort(()=>Math.random()-0.5).slice(0,Math.min(10,left));
+  QZ={queue:pool,i:0,results:[],showpy:false,miss:0};
+  openPractice(pool[0]);
 }
 const LASTK='hskwall.lastword';
 function fillPracticeCards(){
@@ -1002,11 +1059,15 @@ function fillPracticeCards(){
   const e=lw?S.words.find(x=>x.w===lw):null;
   $('cardlast').disabled=!e;
   $('lastsub').textContent = e ? `${e.w} · ${e.p}` : 'Nothing practised yet — open a word and tap Practice writing.';
+  $('quizsub').textContent = gated()
+    ? `Words from the current wall view, written from the meaning. ${quizLeft()} of ${FREE_QUIZ_WORDS} free quiz words left today.`
+    : 'Ten words from the current wall view. You see the meaning and write each character from memory.';
 }
 $('cardquiz').onclick=()=>pickQuiz();
 $('cardfree').onclick=()=>{
   const lw=localStorage.getItem(LASTK);
-  const e=(lw&&S.words.find(x=>x.w===lw)) || S.words.find(x=>!known.has(x.w)) || S.words[0];
+  const cand=(lw&&S.words.find(x=>x.w===lw));
+  const e=(cand&&!lvlLocked(cand.l)&&cand) || S.words.find(x=>!known.has(x.w)&&!lvlLocked(x.l)) || S.words.find(x=>!lvlLocked(x.l));
   if(!e) return; QZ=null; openPractice(e,'free');
 };
 $('cardlast').onclick=()=>{
@@ -1079,9 +1140,7 @@ $('prac').addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePractice()
 
 /* ---------- free write ---------- */
 const FKEY='hskwall.freewrite.v1';
-// Premium: single flag, set by the billing layer (RevenueCat) later. Free write keeps 10 attempts free, 20 with premium.
-const isPremium=()=>{ try{ return localStorage.getItem('hskwall.premium')==='1'; }catch(e){ return false; } };
-const fwCap=()=>isPremium()?20:10;
+// Gallery cap: fwCap() above — 10 attempts free, 20 with premium.
 let fws=JSON.parse(localStorage.getItem(FKEY)||'{}'); // {char:[{d:[[x,y,x,y..]..],t:ms}]}
 let fwStrokes=[], fwCur=null;
 const fwEl=$('fw');
@@ -1108,7 +1167,7 @@ const fmtD=t=>{ const d=new Date(t), now=new Date(); return d.toDateString()===n
 function drawGal(c){
   const list=fws[c]||[]; $('galc').textContent=c; $('galn').textContent=list.length; $('galcap').textContent=fwCap();
   $('galgrid').innerHTML=`<div class="galcell model" style="padding:8%">${charSVG(c,'var(--ink)')}</div>`+list.map((a,i)=>`<div class="galcell" data-i="${i}">${svgOf(a)}<small>${fmtD(a.t)}</small><span class="del" data-del="${i}" title="Delete">×</span></div>`).join('')+
-    Array.from({length:Math.max(0,10-list.length)},(_,i)=>`<div class="galcell empty">${list.length+i+1}</div>`).join('');
+    Array.from({length:Math.max(0,fwCap()-list.length)},(_,i)=>`<div class="galcell empty">${list.length+i+1}</div>`).join('');
 }
 $('galgrid').addEventListener('click',ev=>{
   const c=pchars[pidx]; const del=ev.target.closest('[data-del]');
@@ -1120,7 +1179,16 @@ $('galbigclose').onclick=()=>$('galbig').close();
 $('galclear').onclick=()=>{ const c=pchars[pidx]; if(fws[c] && confirm('Delete all saved writings of '+c+'?')){ delete fws[c]; fwSave(); drawGal(c); } };
 
 /* ---------- stats & reminder ---------- */
-function openSettings(){ $('goalin').value=goal(); const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); $('remtime').value=rem.time||'20:00'; remStatus(); $('penset').checked=penOnly; }
+function openSettings(){
+  $('goalin').value=goal(); const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); $('remtime').value=rem.time||'20:00'; remStatus(); $('penset').checked=penOnly;
+  const show=gatesOn()||isPremium(); $('premgrp').classList.toggle('hidden',!show);
+  if(show){
+    $('premstat').textContent=isPremium()
+      ? 'Premium is active on this device. Thank you!'
+      : `Free plan: HSK 1, ${FREE_QUIZ_WORDS} quiz words a day, gallery keeps 10 attempts. Premium: every HSK level, unlimited quizzes, a larger gallery.`;
+    $('prembtn').classList.toggle('hidden',isPremium());
+  }
+}
 function openStats(){
   const n=todayCount(), g=goal();
   $('goalring').style.setProperty('--p',Math.min(100,100*n/g)+'%'); $('goaltxt').textContent=n+'/'+g;
@@ -1166,6 +1234,39 @@ setInterval(checkReminder,60*1000); checkReminder();
 ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,ev=>ev.preventDefault(),{passive:false}));
 if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data==='goal-state'){ const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); if(ev.ports[0]) ev.ports[0].postMessage({on:!!rem.on,time:rem.time||'20:00',today:todayCount(),goal:goal(),last:rem.last||''}); } });
 updateGoal();
+
+/* ---------- premium paywall ---------- */
+// D3: the free allowance is quiz WORDS per day, counted from the activity log (completed, not skipped)
+const quizLeft=()=>{ const k=dayKey(Date.now()); return Math.max(0,FREE_QUIZ_WORDS-LOG.filter(e=>e.k==='quiz'&&dayKey(e.t)===k).length); };
+function openPaywall(why){
+  $('paywhy').textContent = why==='quiz' ? `You've written today's ${FREE_QUIZ_WORDS} free quiz words. Premium removes the daily limit.`
+    : why==='level' ? `HSK ${FREE_MAX_LVL+1} and above are part of Premium. HSK 1 stays free.`
+    : 'One plan unlocks everything.';
+  $('paymsg').textContent=''; $('paydlg').showModal();
+}
+function setPremium(v){
+  try{ if(v) localStorage.setItem(PREMK,'1'); else localStorage.removeItem(PREMK); }catch(e){}
+  if($('paydlg').open) $('paydlg').close();
+  build(); fillPracticeCards(); openSettings();
+}
+// window.HP_BILLING is the RevenueCat bridge the Capacitor shell provides:
+// { purchase(productId): Promise<bool entitled>, restore(): Promise<bool entitled> }
+async function payAction(kind, product, msgEl){
+  const out=t=>{ (msgEl||$('paymsg')).textContent=t; };
+  const B=window.HP_BILLING;
+  if(!B){ out(kind==='restore' ? 'Restore works in the Android / iOS app once purchases launch.' : 'Purchases are made in the Android / iOS app. On the web nothing is charged.'); return; }
+  try{
+    out('One moment…');
+    const ok = kind==='restore' ? await B.restore() : await B.purchase(product);
+    if(ok) setPremium(true);
+    else out(kind==='restore' ? 'No previous purchase found for this account.' : 'Purchase not completed. Nothing was charged.');
+  }catch(e){ out('Something went wrong. Nothing was charged.'); }
+}
+$('payyear').onclick=()=>payAction('buy','premium_yearly');
+$('paylife').onclick=()=>payAction('buy','premium_lifetime');
+$('payrestore').onclick=()=>payAction('restore');
+$('prembtn').onclick=()=>openPaywall();
+$('premrestore').onclick=()=>payAction('restore',null,$('premstat'));
 
 /* ---------- start ---------- */
 build(); doPull(false); showTab('wall');
