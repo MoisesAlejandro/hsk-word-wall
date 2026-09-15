@@ -209,8 +209,16 @@
   .ring{width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--seal) var(--p,0%), var(--rule) 0); position:relative; flex:none}
   .ring::after{content:""; position:absolute; inset:9px; border-radius:50%; background:var(--panel)}
   .ring b{position:relative; z-index:1; font-size:15px}
-  .heat{display:grid; grid-template-columns:repeat(13,1fr); gap:3px; margin-top:6px}
-  .heat i{aspect-ratio:1; border-radius:2px; background:var(--rule); display:block}
+  .heatwrap{display:flex; gap:6px; margin-top:6px}
+  .heatdays{display:grid; grid-template-rows:repeat(7,14px); row-gap:3px; font-size:9px; color:var(--faint); text-align:right; padding-top:12px}
+  .heatdays span{line-height:14px}
+  .heatscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin; flex:1; min-width:0}
+  .heatmonths{display:grid; grid-auto-flow:column; grid-auto-columns:14px; column-gap:3px; font-size:9px; color:var(--faint); height:12px; width:max-content}
+  .heatmonths span{white-space:nowrap; overflow:visible}
+  .heat{display:grid; grid-template-rows:repeat(7,14px); grid-auto-flow:column; grid-auto-columns:14px; gap:3px; width:max-content}
+  .heat i{width:14px; height:14px; border-radius:2px; background:var(--rule); display:block; cursor:pointer}
+  .heat i.pad{visibility:hidden; cursor:default}
+  .heat i.sel{outline:2px solid var(--focus); outline-offset:-1px}
   .heat i.l1{background:#f2c1bd} .heat i.l2{background:#e58b84} .heat i.l3{background:var(--seal)}
   .heat i.today{outline:2px solid var(--ink); outline-offset:-1px}
   .sset{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0}
@@ -413,6 +421,9 @@
   .lvlocked .chip{opacity:.5}
   .lvlocked .chip::before{content:"🔒"; position:absolute; top:2px; left:3px; font-size:9px; line-height:1; filter:grayscale(1); opacity:.6}
   .lvlocked .chip .hsktag{display:none}
+  .chip.lockw{opacity:.5}
+  .chip.lockw::before{content:"🔒"; position:absolute; top:2px; left:3px; font-size:9px; line-height:1; filter:grayscale(1); opacity:.6}
+  .chip.lockw .hsktag{display:none}
   .lockbtn{margin-left:auto; border:1px solid var(--seal); background:var(--seal-soft); color:var(--seal); border-radius:6px; padding:3px 10px; font-size:12px; cursor:pointer; white-space:nowrap}
   #paydlg{border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); padding:0; max-width:420px; width:calc(100% - 32px)}
   #paydlg::backdrop{background:rgba(0,0,0,.35)}
@@ -467,10 +478,15 @@
     <div class="ring" id="goalring"><b id="goaltxt">0/5</b></div>
     <div><b id="goalmsg" style="font-size:16px"></b>
       <div class="exh" style="margin:2px 0 0">A goal action = marking a word known, a completed Write / quiz character, or a saved free write.</div>
-      <div class="sset">Streak <b id="streak">0</b> days · goal set in Settings</div></div>
+      <div class="sset">Streak <b id="streak">0</b> days · studying since <b id="since"></b></div></div>
   </div>
   <div class="srow" id="stiles"></div>
-  <div><div class="exh" style="margin:6px 0 0">Last 13 weeks · darker = more actions</div><div class="heat" id="heat"></div></div>
+  <div><div class="exh" style="margin:6px 0 0">One column per week since you started · darker = more actions</div>
+    <div class="heatwrap">
+      <div class="heatdays" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+      <div class="heatscroll" id="heatscroll"><div class="heatmonths" id="heatmonths"></div><div class="heat" id="heat"></div></div>
+    </div>
+    <p class="exh" id="heatinfo" style="min-height:1.2em; margin:4px 0 0">Tap a day for details.</p></div>
   <div class="srow" id="stiles2"></div>
 </div>
 
@@ -484,6 +500,9 @@
     <p class="exh" style="margin:4px 0 0" id="remnote"></p>
   </section>
   <section class="sgrp"><h3>Writing</h3>
+    <div class="sset" id="fwcapset"><label>Free-write history <select id="fwcapin">
+      <option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option>
+    </select> attempts per character</label></div>
     <label class="srowlab"><input type="checkbox" id="penset"><span>Pen only — finger touches are ignored so your palm can rest on the tablet</span></label>
     <label class="srowlab"><input type="checkbox" id="brushset"><span>Brush ink — free write strokes thicken and taper like a calligraphy brush, using stylus pressure where available</span></label>
     <div id="bswrap" class="hidden" style="margin:2px 0 4px">
@@ -533,7 +552,7 @@
     <div class="sset" style="margin-top:8px"><button class="btn ghost" id="syncbtn" type="button">Sync across devices</button><span id="syncstat" class="exh"></span></div>
   </details>
   <section class="sgrp"><h3>About</h3>
-    <div class="sset"><button class="btn ghost" id="ver" type="button"></button><a class="linklike" href="privacy.html">Privacy policy</a></div>
+    <div class="sset"><button class="btn ghost" id="ver" type="button"></button><a class="linklike" href="privacy.html">Privacy policy</a><a class="linklike" href="terms.html">Terms of Use</a><a class="linklike" href="support.html">Support</a></div>
     <div class="attrib">
       <a href="https://www.mdbg.net/chinese/dictionary?page=cc-cedict" target="_blank" rel="noopener">Dictionary data: CC-CEDICT (CC BY-SA 4.0)</a>
       <a href="https://hanziwriter.org" target="_blank" rel="noopener">Stroke order: Hanzi Writer (MIT)</a>
@@ -649,8 +668,15 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 const CHANGELOG = [
+  {v:'1.15.0', d:'2026-09-15', n:[
+    'Stats: the activity heatmap now starts the week you began studying and grows with you — month and weekday labels, tap any day for its full date, actions and words, today marked',
+    '"Studying since" shown next to your streak',
+    'Free-write history is now a setting: keep 10 to 40 attempts per character (default 20)',
+    'Terms of Use and Support pages, linked with the Privacy policy from Settings > About',
+    'Premium groundwork (dormant until billing ships): the free plan now also includes the first 50 words of HSK 2; its gallery keeps 5 attempts'
+  ]},
   {v:'1.14.0', d:'2026-09-14', n:['Brush size: Fine / Medium / Thick / Bold, in Settings > Writing, with a live preview','The size applies to new strokes and to saved brush attempts in the gallery']},
   {v:'1.13.1', d:'2026-09-14', n:['Brush ink strokes are noticeably thicker']},
   {v:'1.13.0', d:'2026-09-14', n:['Brush ink: an optional free-write style where strokes thicken, thin and taper like a calligraphy brush, using stylus pressure and pen speed','Turn it on in Settings > Writing. Off by default, and saved attempts keep the look they were drawn with']},
@@ -749,12 +775,16 @@ const loadKnown = key=>new Set(JSON.parse(localStorage.getItem(key)||'[]'));
 /* ---------- premium (docs/STATUS.md: HSK 1 free; D3: 5 free quiz words/day; single isPremium flag, set by RevenueCat in the store builds).
    Gates stay OFF until billing ships: hskwall.gates='1' turns them on (test flag; store builds will default it on). */
 const PREMK='hskwall.premium', GATEK='hskwall.gates';
-const FREE_MAX_LVL=1, FREE_QUIZ_WORDS=5;
+const FREE_MAX_LVL=1, FREE_HSK2=50, FREE_QUIZ_WORDS=5;
 const isPremium=()=>{ try{ return localStorage.getItem(PREMK)==='1'; }catch(e){ return false; } };
 const gatesOn=()=>{ try{ return localStorage.getItem(GATEK)==='1'; }catch(e){ return false; } };
 const gated=()=>gatesOn() && !isPremium();
-const lvlLocked=l=>MODE==='hsk' && gated() && l>FREE_MAX_LVL && l!==0;
-const fwCap=()=>isPremium()?20:10;
+{ let n=0; DATA.forEach(e=>{ if(e.l===2 && n<FREE_HSK2){ e.f2=true; n++; } }); } // first 50 HSK 2 words in list order stay free
+const wordLocked=e=>MODE==='hsk' && gated() && e.l>FREE_MAX_LVL && e.l!==0 && !e.f2;
+const lvlLocked=l=>MODE==='hsk' && gated() && l>FREE_MAX_LVL+1 && l!==0; // level fully premium (HSK 3+)
+const FWCAPK='hskwall.fwcap';
+const fwUserCap=()=>{ const v=+localStorage.getItem(FWCAPK)||20; return Math.min(40,Math.max(5,v)); };
+const fwCap=()=>gated()?5:fwUserCap();
 
 /* ---------- activity log, goal, streak ---------- */
 const LOGK='hskwall.log.v1', GOALK='hskwall.goal', REMK='hskwall.remind';
@@ -763,6 +793,19 @@ const dayKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+String(d.getMo
 const goal=()=>+(localStorage.getItem(GOALK)||5);
 function logEv(k,w){ LOG.push({t:Date.now(),k,w}); if(LOG.length>6000) LOG=LOG.slice(-6000); localStorage.setItem(LOGK,JSON.stringify(LOG)); updateGoal(); if(typeof syncPush==='function') syncPush(); }
 const todayCount=()=>{ const k=dayKey(Date.now()); return LOG.filter(e=>dayKey(e.t)===k).length; };
+// M9: start of history. Set on first launch; backfilled to the earliest log entry, and pulled
+// earlier if a sync later merges in older activity. All date math is local time via dayKey.
+const FUKEY='hskwall.firstUse';
+const keyToDate=k=>{ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); };
+function firstUse(){
+  let k=localStorage.getItem(FUKEY);
+  const logMin=LOG.length?dayKey(Math.min(...LOG.map(e=>e.t))):null;
+  if(!k) k=logMin||dayKey(Date.now());
+  if(logMin && logMin<k) k=logMin;
+  try{ localStorage.setItem(FUKEY,k); }catch(_){}
+  return k;
+}
+firstUse();
 function updateGoal(){ const n=todayCount(), g=goal(); const b=$('goalbadge'); b.textContent=`${n}/${g}`; b.classList.toggle('met',n>=g); }
 /* ---------- tabs ---------- */
 let TAB='wall';
@@ -805,12 +848,14 @@ function build(){
     const list=byLvl[l]; if(!list||!list.length) return;
     const sec=document.createElement('section'); sec.id=S.anchor(l);
     const lk=lvlLocked(l); if(lk) sec.classList.add('lvlocked');
-    sec.innerHTML=`<div class="lvlhead"><h2>${S.label(l)}</h2><span class="count" id="c${l}"></span>${lk?'<button class="lockbtn" type="button">🔒 Premium</button>':''}</div>`;
+    const partial=MODE==='hsk' && gated() && l===2;
+    sec.innerHTML=`<div class="lvlhead"><h2>${S.label(l)}</h2><span class="count" id="c${l}"></span>${lk?'<button class="lockbtn" type="button">🔒 Premium</button>':partial?`<button class="lockbtn" type="button">🔒 Premium after ${FREE_HSK2}</button>`:''}</div>`;
     const g=document.createElement('div'); g.className='grid';
     list.forEach(e=>{
       const b=document.createElement('button'); b.className='chip'; b.dataset.i=e.i_;
       b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="★ Repeated: the teacher annotated this word 3+ times or it appears 6+ times in the notes">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'');
       if(known.has(e.w)) b.classList.add('known');
+      if(!lvlLocked(e.l) && wordLocked(e)) b.classList.add('lockw');
       g.appendChild(b); chips[e.i_]=b;
     });
     sec.appendChild(g); main.appendChild(sec);
@@ -861,7 +906,7 @@ document.querySelectorAll('#modeseg button').forEach(b=>b.onclick=()=>{
 /* ---------- detail sheet ---------- */
 const sheet=$('sheet');
 function openWord(e){
-  if(lvlLocked(e.l)){ openPaywall('level'); return; }
+  if(wordLocked(e)){ openPaywall('level'); return; }
   cur=e;
   document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel'));
   if(chips[e.i_]) chips[e.i_].classList.add('sel');
@@ -1053,7 +1098,7 @@ const HWD=window.HW_DATA||{};
 const cssv=(n,f)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||f;
 const charSVG=(c,color)=>{ const d=HWD[c]; if(!d) return `<span style="font-family:'Kaiti SC','KaiTi',serif">${c}</span>`; return `<svg viewBox="0 0 1024 1024" style="width:100%;height:100%;display:block"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map(p=>`<path d="${p}" fill="${color}"/>`).join('')}</g></svg>`; };
 function openPractice(e,startMode){
-  if(!QZ && lvlLocked(e.l)){ openPaywall('level'); return; }
+  if(!QZ && wordLocked(e)){ openPaywall('level'); return; }
   if(typeof HanziWriter==='undefined'){ alert('Writing module not loaded yet. Reload once online.'); return; }
   pw=e; pchars=[...e.w].filter(c=>/[\u4e00-\u9fff]/.test(c)); if(!pchars.length) return;
   localStorage.setItem(LASTK,e.w);
@@ -1077,7 +1122,7 @@ bindQuiz();
 function pickQuiz(){
   const left=gated()?quizLeft():10;
   if(left<=0){ openPaywall('quiz'); return; }
-  const vis=S.words.filter(e=>chips[e.i_] && !chips[e.i_].classList.contains('hidden') && !lvlLocked(e.l));
+  const vis=S.words.filter(e=>chips[e.i_] && !chips[e.i_].classList.contains('hidden') && !wordLocked(e));
   let pool=vis.filter(e=>!known.has(e.w)); if(pool.length<5) pool=vis;
   if(!pool.length){ alert('No words to quiz in the current view.'); return; }
   pool=[...pool].sort(()=>Math.random()-0.5).slice(0,Math.min(10,left));
@@ -1098,7 +1143,7 @@ $('cardquiz').onclick=()=>pickQuiz();
 $('cardfree').onclick=()=>{
   const lw=localStorage.getItem(LASTK);
   const cand=(lw&&S.words.find(x=>x.w===lw));
-  const e=(cand&&!lvlLocked(cand.l)&&cand) || S.words.find(x=>!known.has(x.w)&&!lvlLocked(x.l)) || S.words.find(x=>!lvlLocked(x.l));
+  const e=(cand&&!wordLocked(cand)&&cand) || S.words.find(x=>!known.has(x.w)&&!wordLocked(x)) || S.words.find(x=>!wordLocked(x));
   if(!e) return; QZ=null; openPractice(e,'free');
 };
 $('cardlast').onclick=()=>{
@@ -1242,7 +1287,7 @@ applyBrushSize(BRUSH_BASE);
 
 /* ---------- free write ---------- */
 const FKEY='hskwall.freewrite.v1';
-// Gallery cap: fwCap() above — 10 attempts free, 20 with premium.
+// Gallery cap: fwCap() above — 5 attempts on the free plan; otherwise the Settings choice (default 20, max 40).
 let fws=JSON.parse(localStorage.getItem(FKEY)||'{}'); // {char:[{d:[[x,y,x,y..]..],t:ms}]}
 let fwStrokes=[], fwFacs=[], fwCur=null;
 const fwEl=$('fw');
@@ -1301,11 +1346,12 @@ $('galclear').onclick=()=>{ const c=pchars[pidx]; if(fws[c] && confirm('Delete a
 /* ---------- stats & reminder ---------- */
 function openSettings(){
   $('goalin').value=goal(); const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); $('remtime').value=rem.time||'20:00'; remStatus(); $('penset').checked=penOnly;
+  $('fwcapin').value=String(fwUserCap()); $('fwcapset').classList.toggle('hidden', gated());
   const show=gatesOn()||isPremium(); $('premgrp').classList.toggle('hidden',!show);
   if(show){
     $('premstat').textContent=isPremium()
       ? 'Premium is active on this device. Thank you!'
-      : `Free plan: HSK 1, ${FREE_QUIZ_WORDS} quiz words a day, gallery keeps 10 attempts. Premium: every HSK level, unlimited quizzes, a larger gallery.`;
+      : `Free plan: HSK 1 plus the first ${FREE_HSK2} words of HSK 2, ${FREE_QUIZ_WORDS} quiz words a day, gallery keeps 5 attempts. Premium: every HSK level, unlimited quizzes, a gallery of up to 40 attempts.`;
     $('prembtn').classList.toggle('hidden',isPremium());
   }
 }
@@ -1318,11 +1364,33 @@ function openStats(){
   const c=k=>LOG.filter(e=>e.k===k).length, cw=k=>LOG.filter(e=>e.k===k&&wk(e.t)).length;
   $('stiles').innerHTML=`<div class="stile"><b>${hk} <small style="font-size:12px;font-weight:400">/ ${SETS.hsk.words.length}</small></b><span>HSK words known</span></div>${SETS.cls.words.length?`<div class="stile"><b>${ck} <small style="font-size:12px;font-weight:400">/ ${SETS.cls.words.length}</small></b><span>Class words known</span></div>`:''}<div class="stile"><b>${cw('known')}</b><span>marked known this week</span></div>`;
   $('stiles2').innerHTML=`<div class="stile"><b>${c('write')}</b><span>characters written correctly <small>(${cw('write')} this week)</small></span></div><div class="stile"><b>${c('quiz')}</b><span>quiz words completed <small>(${cw('quiz')} this week)</small></span></div><div class="stile"><b>${c('free')}</b><span>free writes saved <small>(${cw('free')} this week)</small></span></div>`;
-  const counts={}; LOG.forEach(e=>{ const k=dayKey(e.t); counts[k]=(counts[k]||0)+1; });
-  const today=new Date(); today.setHours(0,0,0,0); const start=new Date(today); start.setDate(start.getDate()-start.getDay()-12*7);
-  let cells=[]; for(let r=0;r<7;r++) for(let col=0;col<13;col++){ const d=new Date(start); d.setDate(d.getDate()+col*7+r); const k=dayKey(d); const v=counts[k]||0; const lvl=v===0?'':v>=g?'l3':v>=Math.ceil(g/2)?'l2':'l1'; cells.push(`<i class="${lvl} ${k===dayKey(today)?'today':''}" title="${k}: ${v}"></i>`); }
+  const fu=firstUse();
+  $('since').textContent=keyToDate(fu).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  // one cell per local day from the Sunday of the first-use week through today; columns are weeks
+  const counts={}, dwords={};
+  LOG.forEach(e=>{ const k=dayKey(e.t); counts[k]=(counts[k]||0)+1; (dwords[k]=dwords[k]||new Set()).add(e.w); });
+  const today=new Date(); today.setHours(0,0,0,0); const tk=dayKey(today);
+  const start=keyToDate(fu); start.setDate(start.getDate()-start.getDay());
+  let cells=[], months=[], lastM=-1;
+  for(const d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
+    if(d.getDay()===0){ const m=d.getMonth();
+      months.push(m!==lastM?`<span>${d.toLocaleDateString(undefined,{month:'short'})}</span>`:'<span></span>'); lastM=m; }
+    const k=dayKey(d);
+    if(k<fu){ cells.push('<i class="pad"></i>'); continue; }
+    const v=counts[k]||0, w=dwords[k]?dwords[k].size:0, lvl=v===0?'':v>=g?'l3':v>=Math.ceil(g/2)?'l2':'l1';
+    const info=`${d.toLocaleDateString(undefined,{weekday:'short',year:'numeric',month:'short',day:'numeric'})} · ${v} action${v===1?'':'s'} · ${w} word${w===1?'':'s'}`;
+    cells.push(`<i class="${lvl}${k===tk?' today':''}" data-info="${info}" title="${info}"></i>`);
+  }
+  $('heatmonths').innerHTML=months.join('');
   $('heat').innerHTML=cells.join('');
+  const hs=$('heatscroll'); hs.scrollLeft=hs.scrollWidth;
+  $('heatinfo').textContent='Tap a day for details.';
 }
+$('heat').addEventListener('click',ev=>{
+  const c=ev.target.closest('i[data-info]'); if(!c) return;
+  document.querySelectorAll('.heat i.sel').forEach(x=>x.classList.remove('sel')); c.classList.add('sel');
+  $('heatinfo').textContent=c.dataset.info;
+});
 function remStatus(){
   const rem=JSON.parse(localStorage.getItem(REMK)||'{}');
   const perm=('Notification' in window)?Notification.permission:'unsupported';
@@ -1330,6 +1398,7 @@ function remStatus(){
   $('remon').textContent=(perm==='granted'&&rem.on)?'Turn off':'Enable notifications';
   $('remnote').textContent='Reminders fire when the app is open or installed to the home screen (Android Chrome checks in the background; on iPad the reminder shows the next time you open the app if the goal was missed). For a guaranteed nudge, also add a phone alarm.';
 }
+$('fwcapin').onchange=()=>{ localStorage.setItem(FWCAPK,$('fwcapin').value); };
 $('goalin').onchange=()=>{ const v=Math.max(1,Math.min(200,+$('goalin').value||5)); $('goalin').value=v; localStorage.setItem(GOALK,v); updateGoal(); };
 $('remtime').onchange=()=>{ const rem=JSON.parse(localStorage.getItem(REMK)||'{}'); rem.time=$('remtime').value; localStorage.setItem(REMK,JSON.stringify(rem)); remStatus(); };
 $('remon').onclick=async()=>{
@@ -1360,7 +1429,7 @@ updateGoal();
 const quizLeft=()=>{ const k=dayKey(Date.now()); return Math.max(0,FREE_QUIZ_WORDS-LOG.filter(e=>e.k==='quiz'&&dayKey(e.t)===k).length); };
 function openPaywall(why){
   $('paywhy').textContent = why==='quiz' ? `You've written today's ${FREE_QUIZ_WORDS} free quiz words. Premium removes the daily limit.`
-    : why==='level' ? `HSK ${FREE_MAX_LVL+1} and above are part of Premium. HSK 1 stays free.`
+    : why==='level' ? `Free includes all of HSK 1 and the first ${FREE_HSK2} words of HSK 2. Premium unlocks the rest.`
     : 'One plan unlocks everything.';
   $('paymsg').textContent=''; $('paydlg').showModal();
 }
