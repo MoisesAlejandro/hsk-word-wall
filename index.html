@@ -13,20 +13,20 @@
     --paper:#fbfbf7; --panel:#ffffff; --ink:#1b1d21; --ink2:#5c6167; --faint:#a7abb1;
     --rule:#e4e3dc; --seal:#c3272b; --seal-soft:#f6e3e2; --focus:#2b5fb8;
     --chip-r:6px;
-    --py:#c3272b; --known:#fbe9e9; --guide:#2e9e5b; --outline:#c9c9c9; --draw:#2b5fb8; --ok:#2e9e5b;
+    --py:#c3272b; --known:#fbe9e9; --wrt:#1f7a4d; --guide:#2e9e5b; --outline:#c9c9c9; --draw:#2b5fb8; --ok:#2e9e5b;
     --tabh:calc(56px + env(safe-area-inset-bottom));
     --ws:1;
   }
   :root[data-theme=dark]{
     --paper:#1c1b18; --panel:#24231f; --ink:#eae7dd; --ink2:#9a968c; --faint:#6f6b62;
     --rule:#2e2c27; --seal:#c3272b; --seal-soft:#3a2422; --focus:#6f9bea;
-    --py:#e0575a; --known:#33211f; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
+    --py:#e0575a; --known:#33211f; --wrt:#5fc08d; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme=light]){
       --paper:#1c1b18; --panel:#24231f; --ink:#eae7dd; --ink2:#9a968c; --faint:#6f6b62;
       --rule:#2e2c27; --seal:#c3272b; --seal-soft:#3a2422; --focus:#6f9bea;
-      --py:#e0575a; --known:#33211f; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
+      --py:#e0575a; --known:#33211f; --wrt:#5fc08d; --guide:#3d5a45; --outline:#4a473f; --draw:#6f9bea; --ok:#57b877;
     }
   }
   *{box-sizing:border-box}
@@ -88,6 +88,12 @@
   .chip.known::after{
     content:""; position:absolute; left:10px; right:10px; top:50%;
     border-top:2px solid var(--seal); opacity:.85; transform:rotate(-4deg);
+  }
+  /* F1 level 2: known AND written from memory */
+  .chip.written{box-shadow:inset 0 0 0 2px var(--wrt)}
+  .chip.written::before{
+    content:"✎"; position:absolute; top:1px; right:4px;
+    font-size:10px; line-height:1; color:var(--wrt);
   }
   .chip.sel{box-shadow:inset 0 0 0 2px var(--seal)}
   .hidden{display:none !important}
@@ -186,6 +192,21 @@
   .galcell .del{position:absolute; top:0; right:0; width:18px; height:18px; background:var(--ink); color:var(--paper); font-size:11px; display:flex; align-items:center; justify-content:center; border-radius:0 0 0 6px}
   #galbig{border:1px solid var(--rule); border-radius:12px; background:var(--panel); padding:12px; max-width:min(92vw,520px)}
   #galbig::backdrop{background:rgba(0,0,0,.45)}
+  #qsetup{border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink);
+    padding:16px; max-width:min(92vw,430px); width:100%}
+  #qsetup::backdrop{background:rgba(0,0,0,.45)}
+  .qsh{font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--faint); margin:12px 0 6px}
+  .qchips{display:flex; flex-wrap:wrap; gap:6px}
+  .qchips button{
+    font:inherit; font-size:13px; min-height:38px; padding:6px 12px; cursor:pointer;
+    border:1px solid var(--rule); border-radius:999px; background:var(--paper); color:var(--ink);
+  }
+  .qchips button[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .qchips button[data-locked="1"]{opacity:.55}
+  .qchips button:focus-visible, #qlen button:focus-visible{outline:2px solid var(--focus); outline-offset:1px}
+  .qcount{margin:12px 0 0; font-size:13px; color:var(--faint)}
+  .qcount.none{color:var(--seal)}
   #galbig svg{width:min(80vw,440px); height:min(80vw,440px); display:block; border:2px solid #2e9e5b; border-radius:6px}
   #galbig polyline{fill:none; stroke:#2b5fb8; stroke-width:22; stroke-linecap:round; stroke-linejoin:round}
   #galbig path.bk{fill:#2b5fb8; stroke:none}
@@ -454,6 +475,7 @@
       <button data-f="all" aria-pressed="true">All</button>
       <button data-f="todo" aria-pressed="false">To learn</button>
       <button data-f="known" aria-pressed="false">Known</button>
+      <button data-f="wrt" aria-pressed="false">Written</button>
       <button data-f="imp" aria-pressed="false" id="impbtn" class="hidden">★ Repeated</button>
     </div>
   </div>
@@ -577,9 +599,40 @@
   </div>
   <div class="sheetbar">
     <button class="btn ghost" id="toggleKnown">✓ Known</button>
+    <button class="btn ghost hidden" id="wrtbtn" type="button" title="Written from memory — tap to clear"></button>
     <button class="btn primary" id="pracbtn">✍ Practice writing</button>
   </div>
 </div>
+
+<dialog id="qsetup">
+  <h2 class="vhd" style="margin:0 0 4px">Writing quiz</h2>
+  <p class="exh" style="margin:0 0 10px">Choose what to draw from. Your choice is remembered for next time.</p>
+
+  <h3 class="qsh">HSK level</h3>
+  <div class="qchips" id="qlv"></div>
+
+  <h3 class="qsh">Words that are</h3>
+  <div class="qchips" id="qst">
+    <button type="button" data-s="known">Known</button>
+    <button type="button" data-s="unknown">Unknown</button>
+    <button type="button" data-s="written">Written</button>
+    <button type="button" data-s="unwritten">Not yet written</button>
+  </div>
+
+  <h3 class="qsh">Session length</h3>
+  <div class="seg" id="qlen" role="group" aria-label="Session length">
+    <button type="button" data-n="10">10</button>
+    <button type="button" data-n="20">20</button>
+    <button type="button" data-n="50">50</button>
+    <button type="button" data-n="0">All</button>
+  </div>
+
+  <p class="qcount" id="qcount">&nbsp;</p>
+  <div class="actions" style="margin-top:10px">
+    <button class="btn ghost" type="button" id="qcancel">Cancel</button>
+    <button class="btn" type="button" id="qstart">Start</button>
+  </div>
+</dialog>
 
 <div id="prac" role="dialog" aria-modal="true" aria-label="Writing practice">
   <div class="prac-in">
@@ -668,8 +721,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.16.0';
 const CHANGELOG = [
+  {v:'1.16.0', d:'2026-09-15', n:['Written mastery: a word shows a second mark once you have produced every character from memory, in a writing quiz or a completed free write','The wall tints written words, the word sheet shows the date, and a Written filter joins All / To learn / Known','Writing quiz setup: pick HSK levels, whether words are known, unknown, written or not yet written, and a session length, with a live count of what matches','Your quiz setup is remembered; Quiz again reuses it and Change setup reopens the picker']},
   {v:'1.15.0', d:'2026-09-15', n:[
     'Stats: the activity heatmap now starts the week you began studying and grows with you — month and weekday labels, tap any day for its full date, actions and words, today marked',
     '"Studying since" shown next to your streak',
@@ -855,6 +909,7 @@ function build(){
       const b=document.createElement('button'); b.className='chip'; b.dataset.i=e.i_;
       b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="★ Repeated: the teacher annotated this word 3+ times or it appears 6+ times in the notes">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'');
       if(known.has(e.w)) b.classList.add('known');
+      if(wordWritten(e)) b.classList.add('written');
       if(!lvlLocked(e.l) && wordLocked(e)) b.classList.add('lockw');
       g.appendChild(b); chips[e.i_]=b;
     });
@@ -936,7 +991,15 @@ function openWord(e){
 function setKnownBtn(){
   const k=cur && known.has(cur.w);
   const b=$('toggleKnown'); b.textContent=k?'✓ Known':'✓ Known'; b.classList.toggle('on',!!k); b.setAttribute('aria-pressed',!!k);
+  const wb=$('wrtbtn'), on=!!cur && wordWritten(cur);
+  wb.classList.toggle('hidden',!on);
+  if(on){ const t=wordWrittenAt(cur); wb.textContent='✎ Written'+(t?' · '+new Date(t).toLocaleDateString([], {month:'short',day:'numeric'}):''); }
 }
+$('wrtbtn').onclick=()=>{
+  if(!cur||!wordWritten(cur)) return;
+  if(!confirm('Clear the written mark for '+cur.w+'? Practice counts stay.')) return;
+  clearWritten(cur); chips[cur.i_].classList.remove('written'); setKnownBtn(); refresh(false);
+};
 $('dmore').onclick=()=>{
   const all=$('dd').classList.toggle('all');
   const extra=cur?Math.max(0,cur.d.length-3):0;
@@ -973,7 +1036,7 @@ function refresh(applyVis){
   if(applyVis){
     S.words.forEach(e=>{
       const k=known.has(e.w);
-      let vis = filter==='all' || (filter==='known'&&k) || (filter==='todo'&&!k) || (filter==='imp'&&e.i);
+      let vis = filter==='all' || (filter==='known'&&k) || (filter==='todo'&&!k) || (filter==='wrt'&&wordWritten(e)) || (filter==='imp'&&e.i);
       if(vis && term) vis = e.w.includes(term) || e.pl.includes(term) || detone(e.pl).includes(term) || e.dl.includes(term);
       chips[e.i_].classList.toggle('hidden', !vis);
       if(vis) shown[e.l]++;
@@ -989,7 +1052,9 @@ function refresh(applyVis){
   const tot=S.words.length, kn=known.size;
   $('fill').style.width=(100*kn/tot).toFixed(1)+'%';
   $('pct').textContent=`${kn} / ${tot} known`;
-  $('stats').textContent=`${tot} words · progress saved in this browser${localStorage.getItem('hskwall.gist.token')?' · synced via Gist':''}`;
+  const wr=S.words.filter(wordWritten).length;
+  $('pct').textContent=`${kn} / ${tot} known` + (wr?` · ${wr} written`:'');
+  $('stats').textContent=`${tot} words · ${kn} known · ${wr} written · progress saved in this browser${localStorage.getItem('hskwall.gist.token')?' · synced via Gist':''}`;
 }
 
 /* ---------- export / import / reset ---------- */
@@ -1016,7 +1081,7 @@ const TKEY='hskwall.gist.token', GKEY='hskwall.gist.id', DKEY='hskwall.gist.dirt
 const gtok=()=>localStorage.getItem(TKEY)||'';
 const gstat=(t,err)=>{ const el=$('syncstat'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
 const gmsg=(t,err)=>{ const el=$('syncmsg'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
-const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],fw:JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}'),reps:JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}'),log:JSON.parse(localStorage.getItem('hskwall.log.v1')||'[]'),goal:localStorage.getItem('hskwall.goal')||'',updated:Date.now()});
+const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],fw:JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}'),reps:JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}'),log:JSON.parse(localStorage.getItem('hskwall.log.v1')||'[]'),goal:localStorage.getItem('hskwall.goal')||'',qprefs:JSON.parse(localStorage.getItem('hskwall.quiz.prefs')||'null'),updated:Date.now()});
 async function gh(path,opt={}){
   const r=await fetch('https://api.github.com'+path,{...opt,headers:{'Authorization':'Bearer '+gtok(),'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});
   if(!r.ok){ const e=new Error('GitHub '+r.status); e.status=r.status; throw e; }
@@ -1038,7 +1103,15 @@ function applyExtras(data){
     for(const c in data.fw){ const seen=new Set((loc[c]||[]).map(a=>a.t)); loc[c]=[...(loc[c]||[]),...data.fw[c].filter(a=>!seen.has(a.t))].sort((a,b)=>a.t-b.t).slice(-(typeof fwCap==='function'?fwCap():10)); }
     localStorage.setItem('hskwall.freewrite.v1',JSON.stringify(loc)); if(typeof fws!=='undefined') fws=loc; }
   if(data.reps && typeof data.reps==='object'){ const loc=JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}');
-    for(const c in data.reps) loc[c]=Math.max(loc[c]||0,data.reps[c]); localStorage.setItem('hskwall.practice.v1',JSON.stringify(loc)); if(typeof preps!=='undefined') preps=loc; }
+    const norm=v=>(typeof v==='number')?{r:v,q:0,f:0,t:0}:{r:+v.r||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
+    for(const c in loc) loc[c]=norm(loc[c]);
+    for(const c in data.reps){ const a=loc[c]||{r:0,q:0,f:0,t:0}, b=norm(data.reps[c]);
+      loc[c]={r:Math.max(a.r,b.r), q:Math.max(a.q,b.q), f:Math.max(a.f,b.f), t:Math.max(a.t,b.t)}; }
+    localStorage.setItem('hskwall.practice.v1',JSON.stringify(loc)); if(typeof preps!=='undefined') preps=loc; }
+  if(data.qprefs && typeof data.qprefs==='object'){
+    localStorage.setItem('hskwall.quiz.prefs',JSON.stringify(data.qprefs));
+    if(typeof qprefs!=='undefined' && data.qprefs.levels) qprefs={...qprefs,...data.qprefs};
+  }
 }
 function applyRemote(hskArr, clsArr, merge){
   const mix=(key,arr)=>{ const loc=loadKnown(key); const set=merge?new Set([...arr,...loc]):new Set(arr); localStorage.setItem(key,JSON.stringify([...set])); };
@@ -1081,7 +1154,27 @@ window.addEventListener('online',()=>doPull(false));
 
 /* ---------- writing practice (Hanzi Writer) ---------- */
 const PKEY='hskwall.practice.v1';
-let preps=JSON.parse(localStorage.getItem(PKEY)||'{}');
+/* Per-character practice record: {r: Write-mode reps 0-5, q: writing-quiz passes,
+   f: free-write completions, t: last activity}. Older builds stored a bare number
+   (the rep count), so migrate those in place on load. */
+let preps=(()=>{
+  const raw=JSON.parse(localStorage.getItem(PKEY)||'{}'), out={};
+  for(const c in raw){
+    const v=raw[c];
+    out[c]=(typeof v==='number')?{r:v,q:0,f:0,t:0}:{r:+v.r||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
+  }
+  return out;
+})();
+localStorage.setItem(PKEY,JSON.stringify(preps)); // persist the migrated shape once
+const prec=c=>(preps[c]||(preps[c]={r:0,q:0,f:0,t:0}));
+function pbump(c,k,cap){ const p=prec(c); p[k]=cap?Math.min(cap,p[k]+1):p[k]+1; p.t=Date.now(); localStorage.setItem(PKEY,JSON.stringify(preps)); }
+/* F1: a character counts as written once it has been produced from memory - a writing
+   quiz pass or a completed free write. A word is written when all its characters are. */
+const HANRE=/[\u3400-\u9fff]/;
+const charWritten=c=>{ const p=preps[c]; return !!p && (p.q>0||p.f>0); };
+const wordWritten=e=>{ const cs=[...e.w].filter(c=>HANRE.test(c)); return cs.length>0 && cs.every(charWritten); };
+const wordWrittenAt=e=>{ const cs=[...e.w].filter(c=>HANRE.test(c)); let t=0; for(const c of cs){ const p=preps[c]; if(!p||!(p.q>0||p.f>0)) return 0; t=Math.max(t,p.t||0); } return t; };
+function clearWritten(e){ [...e.w].filter(c=>HANRE.test(c)).forEach(c=>{ const p=preps[c]; if(p){ p.q=0; p.f=0; } }); localStorage.setItem(PKEY,JSON.stringify(preps)); }
 let pw=null, pchars=[], pidx=0, pmode='watch', writer=null, pmiss=0;
 let penOnly=localStorage.getItem('hskwall.penonly')==='1';
 let QZ=null; // {queue:[words], i, results:[{w,miss,skipped}], showpy, miss}
@@ -1104,7 +1197,7 @@ function openPractice(e,startMode){
   localStorage.setItem(LASTK,e.w);
   const syl=e.p.split(/\s+/); 
   $('pw').textContent=e.w; $('pp').textContent=e.p;
-  $('pchars').innerHTML=pchars.map((c,i)=>`<button data-i="${i}" aria-pressed="${i===0}" class="${(preps[c]||0)>=5?'done':''}">${c}<br><small style="font-size:11px">${syl[i]||''}</small></button>`).join('');
+  $('pchars').innerHTML=pchars.map((c,i)=>`<button data-i="${i}" aria-pressed="${i===0}" class="${((preps[c]||{}).r||0)>=5?'done':''}">${c}<br><small style="font-size:11px">${syl[i]||''}</small></button>`).join('');
   pidx=0; pmode=QZ?'write':(startMode||'watch'); $('prac').classList.add('open'); document.body.style.overflow='hidden';
   if(QZ && !$('qmean')){ $('pquiz').innerHTML=PQUIZ_HTML; bindQuiz(); }
   $('pquiz').classList.toggle('on',!!QZ); $('pmodes').classList.toggle('hidden',!!QZ); $('pchars').classList.toggle('hidden',!!QZ);
@@ -1119,13 +1212,92 @@ function bindQuiz(){
   $('qskip').onclick=()=>quizNext(true);
 }
 bindQuiz();
+/* ---------- F2: writing quiz session picker ---------- */
+const QPKEY='hskwall.quiz.prefs';
+const QP_DEF={levels:[1,2,3,4,5,6], states:['known'], length:20};
+let qprefs=(()=>{
+  try{
+    const p=JSON.parse(localStorage.getItem(QPKEY)||'null'); if(!p) return {...QP_DEF};
+    const lv=Array.isArray(p.levels)?p.levels.map(Number).filter(n=>n>=1&&n<=6):[];
+    const st=Array.isArray(p.states)?p.states.filter(x=>['known','unknown','written','unwritten'].includes(x)):[];
+    return { levels: lv.length?lv:[...QP_DEF.levels],
+             states: st.length?st:[...QP_DEF.states],
+             length: [10,20,50,0].includes(+p.length)?+p.length:QP_DEF.length };
+  }catch(e){ return {...QP_DEF}; }
+})();
+const qpSave=()=>localStorage.setItem(QPKEY,JSON.stringify(qprefs));
+// a level is pickable if any word in it is reachable on the current plan
+const lvlPickable=l=>!gated() || S.words.some(e=>e.l===l && !wordLocked(e));
+function quizPool(){
+  return S.words.filter(e=>{
+    if(wordLocked(e)) return false;
+    if(!qprefs.levels.includes(e.l)) return false;
+    const k=known.has(e.w), w=wordWritten(e);
+    return qprefs.states.some(st =>
+      st==='known'?k : st==='unknown'?!k : st==='written'?w : !w);
+  });
+}
+function qbuildLevels(){
+  $('qlv').innerHTML=[1,2,3,4,5,6].map(l=>{
+    const locked=!lvlPickable(l);
+    return `<button type="button" data-l="${l}" data-locked="${locked?1:0}" aria-pressed="false">HSK ${l}${locked?' 🔒':''}</button>`;
+  }).join('')+`<button type="button" data-l="all" aria-pressed="false">All</button>`;
+}
+function qsyncUI(){
+  // build once, then only update state - re-rendering would detach the chips mid-interaction
+  if(!$('qlv').firstChild) qbuildLevels();
+  document.querySelectorAll('#qlv button[data-l]').forEach(b=>{
+    if(b.dataset.l==='all'){
+      const all=[1,2,3,4,5,6].filter(lvlPickable);
+      b.setAttribute('aria-pressed', all.length>0 && all.every(l=>qprefs.levels.includes(l)));
+    } else b.setAttribute('aria-pressed', qprefs.levels.includes(+b.dataset.l) && b.dataset.locked!=='1');
+  });
+  document.querySelectorAll('#qst button').forEach(b=>b.setAttribute('aria-pressed', qprefs.states.includes(b.dataset.s)));
+  document.querySelectorAll('#qlen button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.n===qprefs.length));
+  const n=quizPool().length;
+  const cap=gated()?Math.min(n,quizLeft()):n;
+  $('qcount').textContent = n===0 ? 'No words match. Change the filters.'
+    : `${n} word${n===1?'':'s'} match` + (qprefs.length&&qprefs.length<n?` · quizzing ${Math.min(qprefs.length,cap)}`:'')
+      + (gated()&&cap<n?` · ${quizLeft()} free left today`:'');
+  $('qcount').classList.toggle('none',n===0);
+  $('qstart').disabled = n===0 || (gated()&&quizLeft()<=0);
+}
+$('qlv').addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b) return;
+  if(b.dataset.l==='all'){
+    const all=[1,2,3,4,5,6].filter(lvlPickable);
+    qprefs.levels = qprefs.levels.length===all.length ? [all[0]] : all;
+  } else {
+    if(b.dataset.locked==='1'){ openPaywall('level'); return; }
+    const l=+b.dataset.l, i=qprefs.levels.indexOf(l);
+    if(i>=0){ if(qprefs.levels.length===1) return; qprefs.levels.splice(i,1); } else qprefs.levels.push(l);
+  }
+  qpSave(); qsyncUI();
+});
+$('qst').addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b) return;
+  const st=b.dataset.s, i=qprefs.states.indexOf(st);
+  if(i>=0){ if(qprefs.states.length===1) return; qprefs.states.splice(i,1); } else qprefs.states.push(st);
+  qpSave(); qsyncUI();
+});
+$('qlen').addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b) return;
+  qprefs.length=+b.dataset.n; qpSave(); qsyncUI();
+});
+$('qcancel').onclick=()=>$('qsetup').close();
+$('qstart').onclick=()=>{ $('qsetup').close(); quizBegin(); };
 function pickQuiz(){
-  const left=gated()?quizLeft():10;
+  if(gated() && quizLeft()<=0){ openPaywall('quiz'); return; }
+  qbuildLevels(); qsyncUI(); $('qsetup').showModal();
+}
+function quizBegin(){
+  const left=gated()?quizLeft():Infinity;
   if(left<=0){ openPaywall('quiz'); return; }
-  const vis=S.words.filter(e=>chips[e.i_] && !chips[e.i_].classList.contains('hidden') && !wordLocked(e));
-  let pool=vis.filter(e=>!known.has(e.w)); if(pool.length<5) pool=vis;
-  if(!pool.length){ alert('No words to quiz in the current view.'); return; }
-  pool=[...pool].sort(()=>Math.random()-0.5).slice(0,Math.min(10,left));
+  let pool=quizPool();
+  if(!pool.length){ qsyncUI(); $('qsetup').showModal(); return; }
+  pool=[...pool].sort(()=>Math.random()-0.5);
+  const want=qprefs.length||pool.length;
+  pool=pool.slice(0,Math.min(want,pool.length,left));
   QZ={queue:pool,i:0,results:[],showpy:false,miss:0};
   openPractice(pool[0]);
 }
@@ -1135,9 +1307,13 @@ function fillPracticeCards(){
   const e=lw?S.words.find(x=>x.w===lw):null;
   $('cardlast').disabled=!e;
   $('lastsub').textContent = e ? `${e.w} · ${e.p}` : 'Nothing practised yet — open a word and tap Practice writing.';
+  const lv=qprefs.levels.length===6?'HSK 1-6':'HSK '+qprefs.levels.slice().sort((a,b)=>a-b).join(', ');
+  const STN={known:'known',unknown:'unknown',written:'written',unwritten:'not yet written'};
+  const st=qprefs.states.map(x=>STN[x]).join(' or ');
+  const len=qprefs.length?qprefs.length:'all';
   $('quizsub').textContent = gated()
-    ? `Words from the current wall view, written from the meaning. ${quizLeft()} of ${FREE_QUIZ_WORDS} free quiz words left today.`
-    : 'Ten words from the current wall view. You see the meaning and write each character from memory.';
+    ? `${len} ${st} words from ${lv}, written from the meaning. ${quizLeft()} of ${FREE_QUIZ_WORDS} free quiz words left today.`
+    : `${len} ${st} words from ${lv}. You see the meaning and write each character from memory.`;
 }
 $('cardquiz').onclick=()=>pickQuiz();
 $('cardfree').onclick=()=>{
@@ -1156,11 +1332,12 @@ function quizNext(skipped){
   if(QZ.i<QZ.queue.length){ openPractice(QZ.queue[QZ.i]); return; }
   const r=QZ.results, clean=r.filter(x=>!x.skipped&&x.miss===0).length;
   $('pw').textContent='Quiz done'; $('pp').textContent='';
-  $('pquiz').innerHTML=`<div class="qsum"><div class="big">${clean} / ${r.length}</div><div>written with no mistakes</div><table>${r.map(x=>`<tr><td><b>${x.w}</b></td><td>${QZ.queue.find(q=>q.w===x.w).p}</td><td>${x.skipped?'skipped':(x.miss?x.miss+' mistakes':'✓ clean')}</td></tr>`).join('')}</table><button class="btn" type="button" id="qagain">Quiz again</button></div>`;
-  $('qagain').onclick=()=>{ closePractice(); pickQuiz(); };
+  $('pquiz').innerHTML=`<div class="qsum"><div class="big">${clean} / ${r.length}</div><div>written with no mistakes</div><table>${r.map(x=>`<tr><td><b>${x.w}</b></td><td>${QZ.queue.find(q=>q.w===x.w).p}</td><td>${x.skipped?'skipped':(x.miss?x.miss+' mistakes':'✓ clean')}</td></tr>`).join('')}</table><button class="btn" type="button" id="qagain">Quiz again</button> <button class="btn ghost" type="button" id="qchange">Change setup</button></div>`;
+  $('qagain').onclick=()=>{ closePractice(); quizBegin(); };
+  $('qchange').onclick=()=>{ closePractice(); pickQuiz(); };
   if(writer) writer.cancelQuiz(); $('hw').innerHTML=''; writer=null; document.querySelector('.tian').classList.add('hidden'); $('pmodes').classList.add('hidden'); $('modehint').textContent=''; $('pchk1').classList.add('hidden'); $('pchk2').classList.add('hidden'); $('repsbox').classList.add('hidden'); $('phint').textContent='';
 }
-function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); $('repsbox').classList.remove('hidden'); $('pchk1').classList.remove('hidden'); $('pchk2').classList.remove('hidden'); if(TAB==='prac') fillPracticeCards(); }
+function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); $('repsbox').classList.remove('hidden'); $('pchk1').classList.remove('hidden'); $('pchk2').classList.remove('hidden'); if(TAB==='prac') fillPracticeCards(); if(typeof syncWritten==='function'){ syncWritten(); refresh(false); } }
 $('phelp').onclick=()=>$('helpdlg').showModal();
 $('pclose').onclick=closePractice; $('pracbtn').onclick=()=>{ if(cur){ QZ=null; openPractice(cur); } };
 $('pchars').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; pidx=+b.dataset.i; loadChar(); });
@@ -1177,7 +1354,8 @@ function loadChar(){
   $('ptotal').textContent=HWD[c]?HWD[c].strokes.length:'?'; $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
   drawReps(c); $('fwmodel').innerHTML=charSVG(c,cssv('--outline','#d8d8d8')); drawGal(c); fwReset(); runMode();
 }
-function drawReps(c){ const n=preps[c]||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
+function syncWritten(){ S.words.forEach(e=>{ if(chips[e.i_]) chips[e.i_].classList.toggle('written', wordWritten(e)); }); }
+function drawReps(c){ const n=(preps[c]||{}).r||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
 const MODEHINT={
   watch:'Watch the stroke order, then switch to Trace.',
   trace:'Trace the faint outline — each stroke is checked.',
@@ -1201,8 +1379,8 @@ function runMode(){
     onCorrectStroke:s=>{ $('pstroke').textContent=s.strokeNum+1; buzz(10); },
     onMistake:s=>{ pmiss++; $('pmiss').textContent=pmiss; flash('wrong'); if(s.mistakesOnStroke>=3) $('phint').textContent='Watch the red hint for this stroke'; },
     onComplete:s=>{ const c=pchars[pidx]; flash('ok'); buzz([10,40,10]);
-      if(QZ){ QZ.miss+=s.totalMistakes; logEv('write',c); if(pidx<pchars.length-1){ setTimeout(()=>{ pidx++; loadChar(); },600); } else { $('pw').textContent=pw.w; $('pp').textContent=pw.p; setTimeout(()=>quizNext(false),900); } return; }
-      if(!trace){ logEv('write',c); preps[c]=Math.min(5,(preps[c]||0)+1); localStorage.setItem(PKEY,JSON.stringify(preps)); drawReps(c); if(preps[c]>=5) document.querySelector(`#pchars button[data-i="${pidx}"]`).classList.add('done'); }
+      if(QZ){ QZ.miss+=s.totalMistakes; logEv('write',c); pbump(c,'q'); if(pidx<pchars.length-1){ setTimeout(()=>{ pidx++; loadChar(); },600); } else { $('pw').textContent=pw.w; $('pp').textContent=pw.p; setTimeout(()=>quizNext(false),900); } return; }
+      if(!trace){ logEv('write',c); pbump(c,'r',5); drawReps(c); if(prec(c).r>=5) document.querySelector(`#pchars button[data-i="${pidx}"]`).classList.add('done'); }
       $('phint').textContent=(s.totalMistakes===0?'Perfect! ':'Done · '+s.totalMistakes+' mistakes. ')+'Tap Write / Trace to go again.'; }
   });
 }
@@ -1325,7 +1503,7 @@ $('fwghost').addEventListener('contextmenu',ev=>ev.preventDefault());
 $('fwsave').onclick=()=>{
   if(!fwStrokes.length){ $('phint').textContent='Nothing to save yet.'; return; }
   const c=pchars[pidx]; const att={d:fwStrokes,t:Date.now()}; if(fwFacs.some(Boolean)) att.f=fwFacs; (fws[c]=fws[c]||[]).push(att); if(fws[c].length>fwCap()) fws[c]=fws[c].slice(-fwCap());
-  fwSave(); fwReset(); drawGal(c); logEv('free',c); $('phint').textContent='Saved · attempt '+fws[c].length+' of '+fwCap();
+  fwSave(); fwReset(); drawGal(c); logEv('free',c); pbump(c,'f'); $('phint').textContent='Saved · attempt '+fws[c].length+' of '+fwCap();
 };
 const svgOf=(att,cls)=>`<svg viewBox="0 0 1000 1000">${att.d.map((p,i)=>(att.f&&att.f[i])?`<path class="bk" d="${brushPath(p,att.f[i])}"/>`:`<polyline points="${p.join(',')}"/>`).join('')}</svg>`;
 const fmtD=t=>{ const d=new Date(t), now=new Date(); return d.toDateString()===now.toDateString()?'today':d.toLocaleDateString([], {month:'short',day:'numeric'}); };
