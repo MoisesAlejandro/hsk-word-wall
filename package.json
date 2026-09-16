@@ -1,6 +1,6 @@
 {
   "name": "hanzi-practice",
-  "version": "1.8.3",
+  "version": "1.16.1",
   "private": true,
   "description": "Hanzi Practice - Chinese vocabulary and handwriting PWA",
   "type": "module",

@@ -17,6 +17,8 @@ const ASSETS = [
   'strokes-data.js',
   'examples.js',
   'privacy.html',
+  'terms.html',
+  'support.html',
 ];
 
 const DENY = ['class-data.js'];
