@@ -23,3 +23,6 @@ key.properties
 
 # Claude Code local config
 .claude/
+
+# Android Studio project config (machine-specific)
+android/.idea/

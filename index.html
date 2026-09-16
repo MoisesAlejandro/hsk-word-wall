@@ -14,7 +14,12 @@
     --rule:#e4e3dc; --seal:#c3272b; --seal-soft:#f6e3e2; --focus:#2b5fb8;
     --chip-r:6px;
     --py:#c3272b; --known:#fbe9e9; --wrt:#1f7a4d; --guide:#2e9e5b; --outline:#c9c9c9; --draw:#2b5fb8; --ok:#2e9e5b;
-    --tabh:calc(56px + env(safe-area-inset-bottom));
+    /* Capacitor 8 (Android) injects --safe-area-inset-* on <html> and does NOT populate
+       env(safe-area-inset-*), which on Android WebView tracks only the display cutout.
+       iOS and the web populate env(). Read Capacitor's value first, fall back to env(). */
+    --sat:var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --sab:var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --tabh:calc(56px + var(--sab));
     --ws:1;
   }
   :root[data-theme=dark]{
@@ -38,7 +43,10 @@
   }
   header{
     position:sticky; top:0; z-index:20; background:var(--paper);
-    border-bottom:1px solid var(--rule); padding:10px 16px 8px;
+    border-bottom:1px solid var(--rule);
+    /* Android 15+ forces edge-to-edge, so the WebView runs under the status bar.
+       The bottom insets were already handled; this is the matching top inset. */
+    padding:calc(10px + var(--sat)) 16px 8px;
   }
   .bar{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; max-width:1200px; margin:0 auto;}
   h1{font-size:20px; margin:0; font-weight:700; letter-spacing:.5px}
@@ -273,7 +281,7 @@
 
   /* ===== v1.7 design pass ===== */
   /* A. header */
-  header{padding:8px 16px 0}
+  header{padding:calc(8px + var(--sat)) 16px 0}  /* --sat: status-bar inset, see :root */
   .bar{align-items:center; gap:10px}
   h1{font-size:18px; white-space:nowrap}
   h1 small{display:block; margin:1px 0 0; font-size:11px}
@@ -310,7 +318,7 @@
   #tabbar{
     position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex;
     background:var(--panel); border-top:1px solid var(--rule);
-    padding-bottom:env(safe-area-inset-bottom);
+    padding-bottom:var(--sab);
   }
   #tabbar button{
     flex:1; border:0; background:none; color:var(--ink2); cursor:pointer;
@@ -326,7 +334,7 @@
   }
   #goalbadge.met{background:var(--ok); color:#fff}
   /* B. word sheet */
-  #sheet{z-index:60; max-height:82vh; border-radius:16px 16px 0 0; padding-bottom:env(safe-area-inset-bottom); display:flex; flex-direction:column; overflow:hidden}
+  #sheet{z-index:60; max-height:82vh; border-radius:16px 16px 0 0; padding-bottom:var(--sab); display:flex; flex-direction:column; overflow:hidden}
   .sheet-scroll{overflow:auto; -webkit-overflow-scrolling:touch}
   .sheet-in{padding:6px 20px 16px; position:relative}
   .grab{width:40px; height:4px; border-radius:2px; background:var(--rule); margin:8px auto 4px}
@@ -341,7 +349,7 @@
   .defs.all li.more{display:block}
   #dmore{margin-top:6px}
   .sheetbar{
-    display:flex; gap:10px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:10px; padding:10px 16px calc(10px + var(--sab));
     border-top:1px solid var(--rule); background:var(--panel); flex:none;
   }
   .sheetbar .btn{flex:1; min-height:48px}
@@ -360,7 +368,7 @@
   }
   /* C. practice screen */
   #prac{z-index:70}
-  .prac-in{max-width:640px; padding:10px 16px calc(24px + env(safe-area-inset-bottom))}
+  .prac-in{max-width:640px; padding:10px 16px calc(24px + var(--sab))}
   .prac-top h2{font-size:20px}
   #pclose{width:44px; height:44px; display:flex; align-items:center; justify-content:center}
   .tian{
@@ -721,8 +729,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.17.1';
 const CHANGELOG = [
+  {v:'1.17.1', d:'2026-09-16', n:['Android: the title no longer sits under the status bar clock on edge-to-edge devices']},
   {v:'1.17.0', d:'2026-09-16', n:['The daily reminder is now scheduled with the phone itself in the installed Android and iOS app, so it arrives at the time you set even when Hanzi Practice is closed','Changing the reminder time reschedules it right away; turning it off cancels it','The web app keeps working the way it did']},
   {v:'1.16.1', d:'2026-09-16', n:['Terms of Use and Support now open correctly in the installed app, not only on the web']},
   {v:'1.16.0', d:'2026-09-15', n:['Written mastery: a word shows a second mark once you have produced every character from memory, in a writing quiz or a completed free write','The wall tints written words, the word sheet shows the date, and a Written filter joins All / To learn / Known','Writing quiz setup: pick HSK levels, whether words are known, unknown, written or not yet written, and a session length, with a live count of what matches','Your quiz setup is remembered; Quiz again reuses it and Change setup reopens the picker']},
