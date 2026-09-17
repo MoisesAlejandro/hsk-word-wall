@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// Release signing. key.properties is gitignored and holds the upload-key passwords;
+// the .jks itself lives outside this repo. Both are absent on a fresh clone and on CI,
+// so the block below is conditional: without them, debug still builds and `release`
+// is simply unsigned rather than the whole build failing.
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def hasUploadKey = keystorePropertiesFile.exists()
+if (hasUploadKey) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "app.hanzipractice"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -17,8 +28,24 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasUploadKey) {
+            release {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasUploadKey) {
+                signingConfig signingConfigs.release
+            }
+            // Left off deliberately: R8 on a Capacitor shell can strip classes the JS
+            // bridge reaches reflectively, and that only shows up at runtime. Revisit
+            // with a device test of its own, not bundled into the signing change.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
