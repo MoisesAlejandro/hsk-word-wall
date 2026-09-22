@@ -100,9 +100,17 @@
   /* F1 level 2: known AND written from memory */
   .chip.written{box-shadow:inset 0 0 0 2px var(--wrt)}
   .chip.written::before{
-    content:"✎"; position:absolute; top:1px; right:4px;
+    content:"✎"; position:absolute; bottom:1px; left:4px;
     font-size:10px; line-height:1; color:var(--wrt);
   }
+  /* F3 star: outlined when off, filled seal-red when on (top-right corner) */
+  .chip .wstar{
+    position:absolute; top:1px; right:4px; font-size:10px; line-height:1;
+    color:var(--faint); opacity:.45; pointer-events:none;
+  }
+  .chip.starred .wstar{color:var(--seal); opacity:1}
+  #starsec .chip .hsktag{display:block}
+  #starempty{padding:14px 4px; color:var(--faint)}
   .chip.sel{box-shadow:inset 0 0 0 2px var(--seal)}
   .hidden{display:none !important}
   /* detail sheet */
@@ -364,6 +372,7 @@
     border-top:1px solid var(--rule); background:var(--panel); flex:none;
   }
   .sheetbar .btn{flex:1; min-height:48px}
+  #starbtn.on{color:var(--seal); border-color:var(--seal)}
   .btn{min-height:44px}
   .btn.primary{background:var(--seal); border-color:var(--seal); color:#fff}
   .btn.on{background:var(--ink); border-color:var(--ink); color:var(--paper)}
@@ -481,6 +490,7 @@
   .chip{font-size:calc(17px * var(--ws)); min-height:calc(52px * var(--ws))}
   .chip .hsktag{font-size:calc(8px * var(--ws))}
   .chip .star{font-size:calc(10px * var(--ws))}
+  .chip .wstar{font-size:calc(10px * var(--ws))}
   @media (max-width:600px){
     .grid{grid-template-columns:repeat(auto-fill, minmax(calc(72px * var(--ws)),1fr))}
     .chip{font-size:calc(15px * var(--ws)); min-height:calc(46px * var(--ws))}
@@ -533,6 +543,7 @@
       <button data-f="todo" aria-pressed="false">To learn</button>
       <button data-f="known" aria-pressed="false">Known</button>
       <button data-f="wrt" aria-pressed="false">Written</button>
+      <button data-f="star" aria-pressed="false">★ Starred</button>
       <button data-f="imp" aria-pressed="false" id="impbtn" class="hidden">★ Repeated</button>
     </div>
   </div>
@@ -546,6 +557,7 @@
   <h2 class="vhd">Practice</h2>
   <div class="cards">
     <button class="card" id="cardquiz"><b>✍ Writing quiz</b><span id="quizsub">Ten words from the current wall view. You see the meaning and write each character from memory.</span></button>
+    <button class="card hidden" id="cardstar"><b>★ Practice starred</b><span id="starsub"></span></button>
     <button class="card" id="cardfree"><b>🖌 Free write</b><span>A blank 田字格 with no checking. Save each attempt and compare your last ten.</span></button>
     <button class="card" id="cardlast"><b>↺ Continue last character</b><span id="lastsub">Nothing practised yet.</span></button>
   </div>
@@ -657,6 +669,7 @@
   <div class="sheetbar">
     <button class="btn ghost" id="toggleKnown">✓ Known</button>
     <button class="btn ghost hidden" id="wrtbtn" type="button" title="Written from memory — tap to clear"></button>
+    <button class="btn ghost" id="starbtn" type="button" title="Star this word to practice later">☆ Practice later</button>
     <button class="btn primary" id="pracbtn">✍ Practice writing</button>
   </div>
 </div>
@@ -674,6 +687,7 @@
     <button type="button" data-s="unknown">Unknown</button>
     <button type="button" data-s="written">Written</button>
     <button type="button" data-s="unwritten">Not yet written</button>
+    <button type="button" data-s="starred">★ Starred</button>
   </div>
 
   <h3 class="qsh">Session length</h3>
@@ -778,8 +792,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.20.0';
+const APP_VERSION = '1.21.0';
 const CHANGELOG = [
+  {v:'1.21.0', d:'2026-09-22', n:['Star a word to practice later: long-press any tile, or open the word and tap \u2606 Practice later. Free and unlimited, and starring a locked word works too','A \u2605 Starred filter shows your starred words in the order you added them, and the writing quiz can draw from just your starred set','A Practice starred card appears on the Practice tab whenever you have starred words','Backups now carry everything: free writes, practice history, the activity log, your goal, quiz setup and starred words \u2014 not just known words']},
   {v:'1.20.0', d:'2026-09-21', n:[
     'Write from memory now earns the Written mark, the same as a writing-quiz pass — Watch and Trace still do not count',
     'Characters you had already written from memory count straight away, so existing progress shows on this launch',
@@ -975,7 +990,8 @@ function build(){
     const g=document.createElement('div'); g.className='grid';
     list.forEach(e=>{
       const b=document.createElement('button'); b.className='chip'; b.dataset.i=e.i_;
-      b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="★ Repeated: the teacher annotated this word 3+ times or it appears 6+ times in the notes">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'');
+      b.innerHTML=esc(e.w)+(e.i?'<span class="star" title="★ Repeated: the teacher annotated this word 3+ times or it appears 6+ times in the notes">★</span>':'')+(e.h?'<span class="hsktag">HSK'+e.h+'</span>':'')+'<span class="wstar">'+(isStar(e.w)?'★':'☆')+'</span>';
+      if(isStar(e.w)) b.classList.add('starred');
       if(known.has(e.w)) b.classList.add('known');
       if(wordWritten(e)) b.classList.add('written');
       if(!lvlLocked(e.l) && wordLocked(e)) b.classList.add('lockw');
@@ -1062,7 +1078,14 @@ function setKnownBtn(){
   const wb=$('wrtbtn'), on=!!cur && wordWritten(cur);
   wb.classList.toggle('hidden',!on);
   if(on){ const t=wordWrittenAt(cur); wb.textContent='✎ Written'+(t?' · '+new Date(t).toLocaleDateString([], {month:'short',day:'numeric'}):''); }
+  setStarBtn();
 }
+function setStarBtn(){
+  const b=$('starbtn'), on=!!cur && isStar(cur.w);
+  b.textContent=(on?'★':'☆')+' Practice later';
+  b.classList.toggle('on',on); b.setAttribute('aria-pressed',on);
+}
+$('starbtn').onclick=()=>{ if(!cur) return; toggleStar(cur.w); };
 $('wrtbtn').onclick=()=>{
   if(!cur||!wordWritten(cur)) return;
   if(!confirm('Clear the written mark for '+cur.w+'? Practice counts stay.')) return;
@@ -1076,7 +1099,37 @@ $('dmore').onclick=()=>{
 function closeSheet(){sheet.classList.remove('open'); document.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel')); cur=null;}
 $('closer').onclick=closeSheet;
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeSheet()});
-main.addEventListener('click',ev=>{ if(ev.target.closest('.lockbtn')){ openPaywall('level'); return; } const c=ev.target.closest('.chip'); if(!c) return; openWord(S.words[+c.dataset.i]); });
+/* ---------- F3: star a word ("practice later") ----------
+   hskwall.starred.v1 is an array of word strings in the order they were starred.
+   Free, unlimited, allowed on locked words; never cleared by known/written. */
+const STARK='hskwall.starred.v1';
+let starred=(()=>{ try{ const a=JSON.parse(localStorage.getItem(STARK)||'[]'); return Array.isArray(a)?a.filter(x=>typeof x==='string'):[]; }catch(e){ return []; } })();
+let starSet=new Set(starred);
+const isStar=w=>starSet.has(w);
+function saveStars(){ localStorage.setItem(STARK,JSON.stringify(starred)); if(typeof syncPush==='function') syncPush(); }
+function paintStar(e){ const c=chips[e.i_]; if(!c) return; c.classList.toggle('starred',isStar(e.w)); const sp=c.querySelector('.wstar'); if(sp) sp.textContent=isStar(e.w)?'★':'☆'; }
+function syncStars(){ S.words.forEach(paintStar); }
+function toggleStar(w){
+  if(starSet.has(w)){ starSet.delete(w); starred=starred.filter(x=>x!==w); }
+  else { starSet.add(w); starred.push(w); }
+  saveStars();
+  const e=S.words.find(x=>x.w===w); if(e) paintStar(e);
+  if(typeof setStarBtn==='function') setStarBtn();
+  if(typeof fillPracticeCards==='function' && TAB==='prac') fillPracticeCards();
+  refresh(filter==='star');
+}
+// long-press a tile to star it without opening the word
+let lpTimer=null, lpX=0, lpY=0, lpFired=false;
+main.addEventListener('pointerdown',ev=>{
+  const c=ev.target.closest('.chip'); if(!c || !c.dataset.i) return;
+  lpX=ev.clientX; lpY=ev.clientY; lpFired=false;
+  clearTimeout(lpTimer);
+  lpTimer=setTimeout(()=>{ lpFired=true; toggleStar(S.words[+c.dataset.i].w); if(navigator.vibrate) navigator.vibrate(12); },550);
+});
+main.addEventListener('pointermove',ev=>{ if(lpTimer && Math.hypot(ev.clientX-lpX,ev.clientY-lpY)>10){ clearTimeout(lpTimer); lpTimer=null; } });
+['pointerup','pointercancel','pointerleave'].forEach(t=>main.addEventListener(t,()=>{ clearTimeout(lpTimer); lpTimer=null; }));
+main.addEventListener('contextmenu',ev=>{ if(ev.target.closest('.chip')) ev.preventDefault(); });
+main.addEventListener('click',ev=>{ if(lpFired){ lpFired=false; ev.preventDefault(); return; } if(ev.target.closest('.lockbtn')){ openPaywall('level'); return; } const c=ev.target.closest('.chip'); if(!c) return; openWord(S.words[+c.dataset.i]); });
 $('dx').addEventListener('click',ev=>{ const b=ev.target.closest('button[data-w]'); if(!b) return; const e=S.words.find(x=>x.w===b.dataset.w); if(e) openWord(e); });
 $('toggleKnown').onclick=()=>{
   if(!cur) return;
@@ -1097,10 +1150,31 @@ document.querySelectorAll('#filterseg button').forEach(b=>b.onclick=()=>{
   refresh(true);
 });
 const detone=s=>s.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g, m=>'aaaaeeeeiiiioooouuuuüüüü'['āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ'.indexOf(m)]);
+function renderStarSec(term){
+  let sec=$('starsec');
+  if(!sec){ sec=document.createElement('section'); sec.id='starsec'; main.prepend(sec); }
+  const idx=new Map(S.words.map(e=>[e.w,e]));
+  let list=starred.map(w=>idx.get(w)).filter(Boolean);
+  if(term) list=list.filter(e=> e.w.includes(term) || e.pl.includes(term) || detone(e.pl).includes(term) || e.dl.includes(term));
+  const n=list.length;
+  let h=`<div class="lvlhead"><h2>Starred</h2><span class="count">· ${n} word${n===1?'':'s'}</span></div>`;
+  if(!starred.length){
+    h+='<p class="exh" id="starempty">Long-press a word or open it and tap ★ to add it here.</p>';
+  } else {
+    h+='<div class="grid">'+list.map(e=>
+      `<button class="chip starred${known.has(e.w)?' known':''}${wordWritten(e)?' written':''}${(!lvlLocked(e.l)&&wordLocked(e))?' lockw':''}" data-i="${e.i_}">`+
+      esc(e.w)+`<span class="hsktag">HSK${e.l||'·'}</span><span class="wstar">★</span></button>`).join('')+'</div>';
+  }
+  sec.innerHTML=h;
+  return n;
+}
 function refresh(applyVis){
   const term=q.value.trim().toLowerCase();
   let shown={}; S.order.forEach(l=>shown[l]=0);
   const active = term || filter!=='all';
+  const starMode = filter==='star';
+  if(starMode) renderStarSec(term); else if($('starsec')) $('starsec').remove();
+  nav.classList.toggle('hidden', starMode);
   if(applyVis){
     S.words.forEach(e=>{
       const k=known.has(e.w);
@@ -1115,29 +1189,37 @@ function refresh(applyVis){
     const kn=byLvl[l].filter(e=>known.has(e.w)).length;
     c.textContent=`${kn} / ${byLvl[l].length} known` + (applyVis && active ? ` · ${shown[l]} shown` : '');
     const n=$('n'+l); if(n) n.textContent=`${kn}/${byLvl[l].length}`;
-    $(S.anchor(l)).classList.toggle('hidden', shown[l]===0 && active);
+    $(S.anchor(l)).classList.toggle('hidden', starMode || (shown[l]===0 && active));
   });
   const tot=S.words.length, kn=known.size;
   $('fill').style.width=(100*kn/tot).toFixed(1)+'%';
   $('pct').textContent=`${kn} / ${tot} known`;
-  const wr=S.words.filter(wordWritten).length;
-  $('pct').textContent=`${kn} / ${tot} known` + (wr?` · ${wr} written`:'');
-  $('stats').textContent=`${tot} words · ${kn} known · ${wr} written · progress saved in this browser${localStorage.getItem('hskwall.gist.token')?' · synced via Gist':''}`;
+  const wr=S.words.filter(wordWritten).length, st=starred.length;
+  $('pct').textContent=`${kn} / ${tot} known` + (wr?` · ${wr} written`:'') + (st?` · ${st} starred`:'');
+  $('stats').textContent=`${tot} words · ${kn} known · ${wr} written · ${st} starred · progress saved in this browser${localStorage.getItem('hskwall.gist.token')?' · synced via Gist':''}`;
 }
 
 /* ---------- export / import / reset ---------- */
 $('exp').onclick=()=>{
-  const blob=new Blob([JSON.stringify({hsk:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)]})],{type:'application/json'});
+  // full backup: the same shape the Gist sync uses (known, cls, fw, reps, log, goal, starred, qprefs)
+  const blob=new Blob([payload()],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hsk-known-words.json'; a.click(); URL.revokeObjectURL(a.href);
 };
+function importData(o){
+  if(Array.isArray(o)){ localStorage.setItem(SETS.hsk.key, JSON.stringify(o)); }
+  else {
+    const hskArr=o.known||o.hsk; // new exports say `known`; pre-1.21 files said `hsk`
+    if(hskArr) localStorage.setItem(SETS.hsk.key, JSON.stringify(hskArr));
+    if(o.cls) localStorage.setItem(SETS.cls.key, JSON.stringify(o.cls));
+    applyExtras(o);
+  }
+  build(); fillPracticeCards(); syncPush();
+}
 $('imp').addEventListener('change',ev=>{
   const f=ev.target.files[0]; if(!f) return;
   f.text().then(t=>{
-    try{ const o=JSON.parse(t);
-      if(Array.isArray(o)) localStorage.setItem(SETS.hsk.key, JSON.stringify(o));
-      else { if(o.hsk) localStorage.setItem(SETS.hsk.key, JSON.stringify(o.hsk)); if(o.cls) localStorage.setItem(SETS.cls.key, JSON.stringify(o.cls)); }
-      build(); syncPush();
-    } catch(e){ alert('That file could not be read as progress data.'); }
+    try{ importData(JSON.parse(t)); }
+    catch(e){ alert('That file could not be read as progress data.'); }
   });
 });
 $('reset').onclick=()=>{
@@ -1149,7 +1231,7 @@ const TKEY='hskwall.gist.token', GKEY='hskwall.gist.id', DKEY='hskwall.gist.dirt
 const gtok=()=>localStorage.getItem(TKEY)||'';
 const gstat=(t,err)=>{ const el=$('syncstat'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
 const gmsg=(t,err)=>{ const el=$('syncmsg'); el.textContent=t; el.style.color=err?'var(--seal)':''; };
-const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],fw:JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}'),reps:JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}'),log:JSON.parse(localStorage.getItem('hskwall.log.v1')||'[]'),goal:localStorage.getItem('hskwall.goal')||'',qprefs:JSON.parse(localStorage.getItem('hskwall.quiz.prefs')||'null'),updated:Date.now()});
+const payload=()=>JSON.stringify({known:[...loadKnown(SETS.hsk.key)],cls:[...loadKnown(SETS.cls.key)],fw:JSON.parse(localStorage.getItem('hskwall.freewrite.v1')||'{}'),reps:JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}'),log:JSON.parse(localStorage.getItem('hskwall.log.v1')||'[]'),goal:localStorage.getItem('hskwall.goal')||'',starred:[...starred],qprefs:JSON.parse(localStorage.getItem('hskwall.quiz.prefs')||'null'),updated:Date.now()});
 async function gh(path,opt={}){
   const r=await fetch('https://api.github.com'+path,{...opt,headers:{'Authorization':'Bearer '+gtok(),'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});
   if(!r.ok){ const e=new Error('GitHub '+r.status); e.status=r.status; throw e; }
@@ -1179,6 +1261,11 @@ function applyExtras(data){
   if(data.qprefs && typeof data.qprefs==='object'){
     localStorage.setItem('hskwall.quiz.prefs',JSON.stringify(data.qprefs));
     if(typeof qprefs!=='undefined' && data.qprefs.levels) qprefs={...qprefs,...data.qprefs};
+  }
+  if(Array.isArray(data.starred)){
+    for(const w of data.starred){ if(typeof w==='string' && !starSet.has(w)){ starSet.add(w); starred.push(w); } }
+    localStorage.setItem(STARK,JSON.stringify(starred));
+    if(typeof syncStars==='function') syncStars();
   }
 }
 function applyRemote(hskArr, clsArr, merge){
@@ -1299,7 +1386,7 @@ let qprefs=(()=>{
   try{
     const p=JSON.parse(localStorage.getItem(QPKEY)||'null'); if(!p) return {...QP_DEF};
     const lv=Array.isArray(p.levels)?p.levels.map(Number).filter(n=>n>=1&&n<=6):[];
-    const st=Array.isArray(p.states)?p.states.filter(x=>['known','unknown','written','unwritten'].includes(x)):[];
+    const st=Array.isArray(p.states)?p.states.filter(x=>['known','unknown','written','unwritten','starred'].includes(x)):[];
     return { levels: lv.length?lv:[...QP_DEF.levels],
              states: st.length?st:[...QP_DEF.states],
              length: [10,20,50,0].includes(+p.length)?+p.length:QP_DEF.length };
@@ -1314,7 +1401,7 @@ function quizPool(){
     if(!qprefs.levels.includes(e.l)) return false;
     const k=known.has(e.w), w=wordWritten(e);
     return qprefs.states.some(st =>
-      st==='known'?k : st==='unknown'?!k : st==='written'?w : !w);
+      st==='known'?k : st==='unknown'?!k : st==='written'?w : st==='starred'?isStar(e.w) : !w);
   });
 }
 function qbuildLevels(){
@@ -1387,8 +1474,10 @@ function fillPracticeCards(){
   const e=lw?S.words.find(x=>x.w===lw):null;
   $('cardlast').disabled=!e;
   $('lastsub').textContent = e ? `${e.w} · ${e.p}` : 'Nothing practised yet — open a word and tap Practice writing.';
+  $('cardstar').classList.toggle('hidden', !starred.length);
+  $('starsub').textContent=`${starred.length} starred word${starred.length===1?'':'s'}, written from the meaning.`;
   const lv=qprefs.levels.length===6?'HSK 1-6':'HSK '+qprefs.levels.slice().sort((a,b)=>a-b).join(', ');
-  const STN={known:'known',unknown:'unknown',written:'written',unwritten:'not yet written'};
+  const STN={known:'known',unknown:'unknown',written:'written',unwritten:'not yet written',starred:'starred'};
   const st=qprefs.states.map(x=>STN[x]).join(' or ');
   const len=qprefs.length?qprefs.length:'all';
   $('quizsub').textContent = gated()
@@ -1396,6 +1485,10 @@ function fillPracticeCards(){
     : `${len} ${st} words from ${lv}. You see the meaning and write each character from memory.`;
 }
 $('cardquiz').onclick=()=>pickQuiz();
+$('cardstar').onclick=()=>{
+  qprefs={...qprefs, states:['starred'], levels:[1,2,3,4,5,6].filter(lvlPickable)};
+  qpSave(); pickQuiz();
+};
 $('cardfree').onclick=()=>{
   const lw=localStorage.getItem(LASTK);
   const cand=(lw&&S.words.find(x=>x.w===lw));
