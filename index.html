@@ -425,7 +425,7 @@
     .prac-in{
       max-width:1180px; height:100dvh; display:grid; gap:0 26px; align-items:start;
       grid-template-columns:minmax(300px,1fr) minmax(320px,560px);
-      grid-template-rows:auto auto auto auto auto auto auto 1fr;
+      grid-template-rows:auto auto auto auto auto auto auto auto 1fr;
       grid-template-areas:
         "top   top"
         "chars grid"
@@ -433,6 +433,7 @@
         "stat  grid"
         "reps  grid"
         "modes grid"
+        "hint  grid"
         "fw    grid"
         "gal   grid";
       padding:10px 16px calc(12px + var(--sab));
@@ -453,7 +454,7 @@
     .gal{display:none; min-height:0; overflow:auto; margin-top:10px; align-self:stretch}
     .gal.on{display:flex; flex-direction:column}
     .galgrid{margin-top:6px}
-    .phint1{display:none}
+    .phint1{grid-area:hint; margin:5px 0 0; text-align:left; max-width:none}
     .tian{width:min(560px, calc(100dvh - 130px))}
   }
   /* E. touch + feedback */
@@ -777,8 +778,13 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.19.0';
+const APP_VERSION = '1.20.0';
 const CHANGELOG = [
+  {v:'1.20.0', d:'2026-09-21', n:[
+    'Write from memory now earns the Written mark, the same as a writing-quiz pass — Watch and Trace still do not count',
+    'Characters you had already written from memory count straight away, so existing progress shows on this launch',
+    'The hint under the practice grid says which mode counts toward Written'
+  ]},
   {v:'1.19.0', d:'2026-09-21', n:['Tablet landscape practice screen rebuilt: the writing grid moves to the right and the character picker, mode buttons, free-write bar and your saved attempts all sit together down the left','Nothing scrolls in landscape any more \u2014 the saved-attempt gallery grows to fill the space instead']},
   {v:'1.18.1', d:'2026-09-21', n:['Fixed practice controls falling below the fold on a tablet in landscape: the mode buttons and the free-write bar (Undo, Clear, Save & next) now stay pinned to the bottom of the screen, clear of the gesture bar, while only the writing area and gallery scroll','The word and Close button stay pinned at the top of the practice screen too, so a short screen or an open keyboard cannot push them away']},
   {v:'1.18.0', d:'2026-09-16', n:['New app icon: the \u6c49 of \u6c49\u5b57\u7ec3\u4e60, replacing the \u8bcd left over from the old \u8bcd\u6c47\u5899 name','Matching splash screen on Android']},
@@ -1165,10 +1171,10 @@ function applyExtras(data){
     for(const c in data.fw){ const seen=new Set((loc[c]||[]).map(a=>a.t)); loc[c]=[...(loc[c]||[]),...data.fw[c].filter(a=>!seen.has(a.t))].sort((a,b)=>a.t-b.t).slice(-(typeof fwCap==='function'?fwCap():10)); }
     localStorage.setItem('hskwall.freewrite.v1',JSON.stringify(loc)); if(typeof fws!=='undefined') fws=loc; }
   if(data.reps && typeof data.reps==='object'){ const loc=JSON.parse(localStorage.getItem('hskwall.practice.v1')||'{}');
-    const norm=v=>(typeof v==='number')?{r:v,q:0,f:0,t:0}:{r:+v.r||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
+    const norm=v=>(typeof v==='number')?{r:v,m:0,q:0,f:0,t:0}:{r:+v.r||0,m:+v.m||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
     for(const c in loc) loc[c]=norm(loc[c]);
-    for(const c in data.reps){ const a=loc[c]||{r:0,q:0,f:0,t:0}, b=norm(data.reps[c]);
-      loc[c]={r:Math.max(a.r,b.r), q:Math.max(a.q,b.q), f:Math.max(a.f,b.f), t:Math.max(a.t,b.t)}; }
+    for(const c in data.reps){ const a=loc[c]||{r:0,m:0,q:0,f:0,t:0}, b=norm(data.reps[c]);
+      loc[c]={r:Math.max(a.r,b.r), m:Math.max(a.m,b.m), q:Math.max(a.q,b.q), f:Math.max(a.f,b.f), t:Math.max(a.t,b.t)}; }
     localStorage.setItem('hskwall.practice.v1',JSON.stringify(loc)); if(typeof preps!=='undefined') preps=loc; }
   if(data.qprefs && typeof data.qprefs==='object'){
     localStorage.setItem('hskwall.quiz.prefs',JSON.stringify(data.qprefs));
@@ -1216,27 +1222,39 @@ window.addEventListener('online',()=>doPull(false));
 
 /* ---------- writing practice (Hanzi Writer) ---------- */
 const PKEY='hskwall.practice.v1';
-/* Per-character practice record: {r: Write-mode reps 0-5, q: writing-quiz passes,
+/* Per-character practice record: {r: Write-mode reps 0-5 (drives the five boxes),
+   m: Write-mode writes from memory, uncapped, q: writing-quiz passes,
    f: free-write completions, t: last activity}. Older builds stored a bare number
    (the rep count), so migrate those in place on load. */
+const D11K='hskwall.d11'; // one-time backfill marker: reps on record -> from-memory writes
 let preps=(()=>{
   const raw=JSON.parse(localStorage.getItem(PKEY)||'{}'), out={};
   for(const c in raw){
     const v=raw[c];
-    out[c]=(typeof v==='number')?{r:v,q:0,f:0,t:0}:{r:+v.r||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
+    out[c]=(typeof v==='number')?{r:v,m:0,q:0,f:0,t:0}:{r:+v.r||0,m:+v.m||0,q:+v.q||0,f:+v.f||0,t:+v.t||0};
+  }
+  // D11: Write mode now earns Written. Credit reps already on record, once only, so
+  // existing users see the mark on next launch without it coming back after a clear.
+  if(!localStorage.getItem(D11K)){
+    for(const c in out){ const o=out[c]; if(!o.m && o.r>0) o.m=o.r; }
+    try{ localStorage.setItem(D11K,'1'); }catch(_){}
   }
   return out;
 })();
 localStorage.setItem(PKEY,JSON.stringify(preps)); // persist the migrated shape once
-const prec=c=>(preps[c]||(preps[c]={r:0,q:0,f:0,t:0}));
+const prec=c=>(preps[c]||(preps[c]={r:0,m:0,q:0,f:0,t:0}));
 function pbump(c,k,cap){ const p=prec(c); p[k]=cap?Math.min(cap,p[k]+1):p[k]+1; p.t=Date.now(); localStorage.setItem(PKEY,JSON.stringify(preps)); }
-/* F1: a character counts as written once it has been produced from memory - a writing
-   quiz pass or a completed free write. A word is written when all its characters are. */
+/* F1 + D11: a character counts as written once it has been produced from memory - a
+   Write-mode completion, a writing quiz pass, or a completed free write. Watch and Trace
+   show the character, so they never count. A word is written when all its characters are. */
 const HANRE=/[\u3400-\u9fff]/;
-const charWritten=c=>{ const p=preps[c]; return !!p && (p.q>0||p.f>0); };
+const memWrites=p=>(p?(p.m||0)+(p.q||0)+(p.f||0):0);
+const charWritten=c=>memWrites(preps[c])>0;
 const wordWritten=e=>{ const cs=[...e.w].filter(c=>HANRE.test(c)); return cs.length>0 && cs.every(charWritten); };
-const wordWrittenAt=e=>{ const cs=[...e.w].filter(c=>HANRE.test(c)); let t=0; for(const c of cs){ const p=preps[c]; if(!p||!(p.q>0||p.f>0)) return 0; t=Math.max(t,p.t||0); } return t; };
-function clearWritten(e){ [...e.w].filter(c=>HANRE.test(c)).forEach(c=>{ const p=preps[c]; if(p){ p.q=0; p.f=0; } }); localStorage.setItem(PKEY,JSON.stringify(preps)); }
+const wordWrittenAt=e=>{ const cs=[...e.w].filter(c=>HANRE.test(c)); let t=0; for(const c of cs){ const p=preps[c]; if(memWrites(p)<=0) return 0; t=Math.max(t,p.t||0); } return t; };
+// Clearing the mark zeroes every from-memory tally, or the mark would reappear on the next
+// render. The capped rep count r is left alone, so the five practice boxes are untouched.
+function clearWritten(e){ [...e.w].filter(c=>HANRE.test(c)).forEach(c=>{ const p=preps[c]; if(p){ p.m=0; p.q=0; p.f=0; } }); localStorage.setItem(PKEY,JSON.stringify(preps)); }
 let pw=null, pchars=[], pidx=0, pmode='watch', writer=null, pmiss=0;
 let penOnly=localStorage.getItem('hskwall.penonly')==='1';
 let QZ=null; // {queue:[words], i, results:[{w,miss,skipped}], showpy, miss}
@@ -1420,8 +1438,8 @@ function syncWritten(){ S.words.forEach(e=>{ if(chips[e.i_]) chips[e.i_].classLi
 function drawReps(c){ const n=(preps[c]||{}).r||0; $('preps').innerHTML=[0,1,2,3,4].map(i=>`<span class="${i<n?'ok':''}">${i<n?c:''}</span>`).join(''); }
 const MODEHINT={
   watch:'Watch the stroke order, then switch to Trace.',
-  trace:'Trace the faint outline — each stroke is checked.',
-  write:'Write from memory. Five correct writes fill the boxes.',
+  trace:'Trace to learn. Write from memory to earn Written.',
+  write:'Write from memory. Counts toward Written.',
   free:'Blank grid, nothing is checked. Save & next keeps your last ten.'
 };
 function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(_){} }
@@ -1442,7 +1460,9 @@ function runMode(){
     onMistake:s=>{ pmiss++; $('pmiss').textContent=pmiss; flash('wrong'); if(s.mistakesOnStroke>=3) $('phint').textContent='Watch the red hint for this stroke'; },
     onComplete:s=>{ const c=pchars[pidx]; flash('ok'); buzz([10,40,10]);
       if(QZ){ QZ.miss+=s.totalMistakes; logEv('write',c); pbump(c,'q'); if(pidx<pchars.length-1){ setTimeout(()=>{ pidx++; loadChar(); },600); } else { $('pw').textContent=pw.w; $('pp').textContent=pw.p; setTimeout(()=>quizNext(false),900); } return; }
-      if(!trace){ logEv('write',c); pbump(c,'r',5); drawReps(c); if(prec(c).r>=5) document.querySelector(`#pchars button[data-i="${pidx}"]`).classList.add('done'); }
+      if(!trace){ const was=pw&&wordWritten(pw); logEv('write',c); pbump(c,'r',5); pbump(c,'m'); drawReps(c);
+        if(prec(c).r>=5) document.querySelector(`#pchars button[data-i="${pidx}"]`).classList.add('done');
+        if(!was && pw && wordWritten(pw)){ syncWritten(); refresh(false); if(cur&&cur.w===pw.w) setKnownBtn(); } }
       $('phint').textContent=(s.totalMistakes===0?'Perfect! ':'Done · '+s.totalMistakes+' mistakes. ')+'Tap Write / Trace to go again.'; }
   });
 }
