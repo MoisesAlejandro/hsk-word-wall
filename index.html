@@ -792,8 +792,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.21.0';
+const APP_VERSION = '1.21.1';
 const CHANGELOG = [
+  {v:'1.21.1', d:'2026-09-22', n:['The Next button in practice writing is hidden for single-character words - it only moves between the characters of a word, and with one character it just cleared the canvas']},
   {v:'1.21.0', d:'2026-09-22', n:['Star a word to practice later: long-press any tile, or open the word and tap \u2606 Practice later. Free and unlimited, and starring a locked word works too','A \u2605 Starred filter shows your starred words in the order you added them, and the writing quiz can draw from just your starred set','A Practice starred card appears on the Practice tab whenever you have starred words','Backups now carry everything: free writes, practice history, the activity log, your goal, quiz setup and starred words \u2014 not just known words']},
   {v:'1.20.0', d:'2026-09-21', n:[
     'Write from memory now earns the Written mark, the same as a writing-quiz pass — Watch and Trace still do not count',
@@ -1361,6 +1362,8 @@ function openPractice(e,startMode){
   if(!QZ && wordLocked(e)){ openPaywall('level'); return; }
   if(typeof HanziWriter==='undefined'){ alert('Writing module not loaded yet. Reload once online.'); return; }
   pw=e; pchars=[...e.w].filter(c=>/[\u4e00-\u9fff]/.test(c)); if(!pchars.length) return;
+  // Next only exists to move between a word's characters; with one character it just wiped the canvas
+  $('pnext').classList.toggle('hidden', pchars.length<2);
   localStorage.setItem(LASTK,e.w);
   const syl=e.p.split(/\s+/); 
   $('pw').textContent=e.w; $('pp').textContent=e.p;
