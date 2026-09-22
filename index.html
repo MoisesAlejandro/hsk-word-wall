@@ -154,7 +154,11 @@
   #prac{position:fixed; inset:0; z-index:40; background:var(--paper); overflow:auto; display:none}
   #prac.open{display:block}
   .prac-in{max-width:640px; margin:0 auto; padding:14px 16px 40px}
-  .prac-top{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .prac-top{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:9; background:var(--paper);
+    padding-top:var(--sat); margin-bottom:4px;
+  }
   .prac-top h2{margin:0; font-size:22px} .prac-top .py{margin:0; font-size:15px}
   #pclose{margin-left:auto; border:0; background:none; font-size:26px; color:var(--ink2); cursor:pointer}
   .chars{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0}
@@ -182,7 +186,14 @@
   #fwmodel{position:absolute; inset:8%; display:none; align-items:center; justify-content:center; font-size:300px; color:#d8d8d8; pointer-events:none; font-family:"Kaiti SC","KaiTi","STKaiti","Noto Serif CJK SC",serif; line-height:1}
   #fwmodel.on{display:flex}
   .fwbar{display:none; gap:8px; justify-content:center; flex-wrap:wrap; margin:10px 0}
-  .fwbar.on{display:flex}
+  /* A8: the free-write action bar is the primary control on that screen and used to fall
+     below the fold on a short landscape viewport. Pin it to the bottom of the practice
+     overlay (which is itself position:fixed), clear of the gesture inset. */
+  .fwbar.on{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:8;
+    margin:0; padding:10px 16px calc(10px + var(--sab));
+    background:var(--panel); border-top:1px solid var(--rule);
+  }
   #fwghost{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action:none}
   .fwbar label{font-size:13px; color:var(--ink2); display:flex; align-items:center; gap:4px}
   .gal{display:none; margin-top:14px}
@@ -368,7 +379,7 @@
   }
   /* C. practice screen */
   #prac{z-index:70}
-  .prac-in{max-width:640px; padding:10px 16px calc(24px + var(--sab))}
+  .prac-in{max-width:640px; padding:10px 16px calc(24px + var(--sab) + var(--fwbarh, 0px) + var(--modesh, 0px))}
   .prac-top h2{font-size:20px}
   #pclose{width:44px; height:44px; display:flex; align-items:center; justify-content:center}
   .tian{
@@ -379,7 +390,15 @@
   .tian.wrong{border-color:var(--seal); box-shadow:0 0 0 4px var(--seal-soft)}
   .tian.ok{border-color:var(--ok); box-shadow:0 0 0 4px var(--seal-soft); animation:okpulse .45s ease}
   @keyframes okpulse{0%{transform:scale(1)}40%{transform:scale(1.015)}100%{transform:scale(1)}}
-  .modes{justify-content:center; margin:10px 0 4px}
+  /* A8: mode switcher is a primary control - pin it above the free-write bar.
+     --fwbarh is 0 unless free write is open, so it sits on the bottom edge otherwise. */
+  .modes{
+    justify-content:center; margin:0;
+    position:fixed; left:0; right:0; bottom:var(--fwbarh, 0px); z-index:7;
+    padding:8px 16px calc(8px + var(--sab));
+    background:var(--paper); border-top:1px solid var(--rule);
+  }
+  #prac.freemode .modes{ padding-bottom:8px; border-top:1px solid var(--rule) }
   .modes button{min-height:44px; padding:8px 14px}
   #pnext{margin-left:4px}
   #pentog,#phelp{margin-left:0; width:44px; padding:0; font-size:16px}
@@ -729,8 +748,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.18.0';
+const APP_VERSION = '1.18.1';
 const CHANGELOG = [
+  {v:'1.18.1', d:'2026-09-21', n:['Fixed practice controls falling below the fold on a tablet in landscape: the mode buttons and the free-write bar (Undo, Clear, Save & next) now stay pinned to the bottom of the screen, clear of the gesture bar, while only the writing area and gallery scroll','The word and Close button stay pinned at the top of the practice screen too, so a short screen or an open keyboard cannot push them away']},
   {v:'1.18.0', d:'2026-09-16', n:['New app icon: the \u6c49 of \u6c49\u5b57\u7ec3\u4e60, replacing the \u8bcd left over from the old \u8bcd\u6c47\u5899 name','Matching splash screen on Android']},
   {v:'1.17.1', d:'2026-09-16', n:['Android: the title no longer sits under the status bar clock on edge-to-edge devices']},
   {v:'1.17.0', d:'2026-09-16', n:['The daily reminder is now scheduled with the phone itself in the installed Android and iOS app, so it arrives at the time you set even when Hanzi Practice is closed','Changing the reminder time reschedules it right away; turning it off cancels it','The web app keeps working the way it did']},
@@ -1212,7 +1232,7 @@ function openPractice(e,startMode){
   $('pchars').innerHTML=pchars.map((c,i)=>`<button data-i="${i}" aria-pressed="${i===0}" class="${((preps[c]||{}).r||0)>=5?'done':''}">${c}<br><small style="font-size:11px">${syl[i]||''}</small></button>`).join('');
   pidx=0; pmode=QZ?'write':(startMode||'watch'); $('prac').classList.add('open'); document.body.style.overflow='hidden';
   if(QZ && !$('qmean')){ $('pquiz').innerHTML=PQUIZ_HTML; bindQuiz(); }
-  $('pquiz').classList.toggle('on',!!QZ); $('pmodes').classList.toggle('hidden',!!QZ); $('pchars').classList.toggle('hidden',!!QZ);
+  $('pquiz').classList.toggle('on',!!QZ); $('pmodes').classList.toggle('hidden',!!QZ); $('pchars').classList.toggle('hidden',!!QZ); syncFwbarH();
   document.querySelector('.tian').classList.remove('hidden');
   if(QZ){ $('pw').textContent='?'.repeat(pchars.length); $('pp').textContent=''; $('qmean').textContent=e.d.map(d=>d.replace(/^Teacher: /,'')).slice(0,3).join(' · '); $('qpy').textContent=QZ.showpy?e.p:''; $('qshowpy').textContent=QZ.showpy?'Hide pinyin':'Show pinyin'; $('qchars').textContent=pchars.length+(pchars.length>1?' characters':' character'); $('qcount').textContent=`Word ${QZ.i+1} of ${QZ.queue.length}`; $('qprog').innerHTML=QZ.queue.map((w,i)=>`<span class="${i<QZ.i?(QZ.results[i].skipped||QZ.results[i].miss?'miss':'ok'):(i===QZ.i?'cur':'')}"></span>`).join(''); QZ.miss=0; }
   loadChar();
@@ -1347,9 +1367,9 @@ function quizNext(skipped){
   $('pquiz').innerHTML=`<div class="qsum"><div class="big">${clean} / ${r.length}</div><div>written with no mistakes</div><table>${r.map(x=>`<tr><td><b>${x.w}</b></td><td>${QZ.queue.find(q=>q.w===x.w).p}</td><td>${x.skipped?'skipped':(x.miss?x.miss+' mistakes':'✓ clean')}</td></tr>`).join('')}</table><button class="btn" type="button" id="qagain">Quiz again</button> <button class="btn ghost" type="button" id="qchange">Change setup</button></div>`;
   $('qagain').onclick=()=>{ closePractice(); quizBegin(); };
   $('qchange').onclick=()=>{ closePractice(); pickQuiz(); };
-  if(writer) writer.cancelQuiz(); $('hw').innerHTML=''; writer=null; document.querySelector('.tian').classList.add('hidden'); $('pmodes').classList.add('hidden'); $('modehint').textContent=''; $('pchk1').classList.add('hidden'); $('pchk2').classList.add('hidden'); $('repsbox').classList.add('hidden'); $('phint').textContent='';
+  if(writer) writer.cancelQuiz(); $('hw').innerHTML=''; writer=null; document.querySelector('.tian').classList.add('hidden'); $('pmodes').classList.add('hidden'); syncFwbarH(); $('modehint').textContent=''; $('pchk1').classList.add('hidden'); $('pchk2').classList.add('hidden'); $('repsbox').classList.add('hidden'); $('phint').textContent='';
 }
-function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); $('repsbox').classList.remove('hidden'); $('pchk1').classList.remove('hidden'); $('pchk2').classList.remove('hidden'); if(TAB==='prac') fillPracticeCards(); if(typeof syncWritten==='function'){ syncWritten(); refresh(false); } }
+function closePractice(){ $('prac').classList.remove('open'); document.body.style.overflow=''; if(writer){ writer.cancelQuiz(); } QZ=null; document.querySelector('.tian').classList.remove('hidden'); $('pmodes').classList.remove('hidden'); $('pchars').classList.remove('hidden'); $('pquiz').classList.remove('on'); $('repsbox').classList.remove('hidden'); $('pchk1').classList.remove('hidden'); $('pchk2').classList.remove('hidden'); syncFwbarH(); if(TAB==='prac') fillPracticeCards(); if(typeof syncWritten==='function'){ syncWritten(); refresh(false); } }
 $('phelp').onclick=()=>$('helpdlg').showModal();
 $('pclose').onclick=closePractice; $('pracbtn').onclick=()=>{ if(cur){ QZ=null; openPractice(cur); } };
 $('pchars').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; pidx=+b.dataset.i; loadChar(); });
@@ -1381,7 +1401,7 @@ function runMode(){
   $('modehint').textContent=QZ?'Write the word from the meaning — each stroke is checked.':(MODEHINT[pmode]||'');
   if(!writer) return; writer.cancelQuiz(); $('pstroke').textContent=0; pmiss=0; $('pmiss').textContent=0; $('phint').textContent='';
   const free=pmode==='free';
-  fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); $('gal').classList.toggle('on',free); $('repsbox').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
+  fwEl.classList.toggle('on',free); $('fwbar').classList.toggle('on',free); syncFwbarH(); $('gal').classList.toggle('on',free); $('repsbox').classList.toggle('hidden',free); $('pchk1').classList.toggle('hidden',free); $('pchk2').classList.toggle('hidden',free); $('hw').style.visibility=free?'hidden':'';
   $('fwmodel').classList.remove('on');
   if(free){ writer.hideCharacter(); writer.hideOutline(); return; }
   if(pmode==='watch'){ writer.showOutline(); writer.showCharacter(); writer.animateCharacter(); return; }
@@ -1456,6 +1476,17 @@ function brushPath(flat,facs){
   return d+'L'+r(R[0][0])+','+r(R[0][1])+'Z';
 }
 const SVGNS='http://www.w3.org/2000/svg';
+/* A8: the free-write action bar is position:fixed, so it no longer takes part in layout.
+   Publish its height as --fwbarh and the practice body pads itself clear of it. */
+function syncFwbarH(){
+  const b=$('fwbar'), on=b && b.classList.contains('on'), r=document.documentElement.style;
+  $('prac').classList.toggle('freemode', !!on);
+  r.setProperty('--fwbarh', on ? Math.ceil(b.getBoundingClientRect().height)+'px' : '0px');
+  const m=$('pmodes');
+  r.setProperty('--modesh', (m && m.offsetParent!==null) ? Math.ceil(m.getBoundingClientRect().height)+'px' : '0px');
+}
+addEventListener('resize', ()=>{ if($('prac').classList.contains('open')) syncFwbarH(); });
+addEventListener('orientationchange', ()=>setTimeout(syncFwbarH,150));
 // a sample 捺 (right-falling): thin entry, swelling belly, lifted foot — the stroke
 // where brush size reads most clearly
 const BS_SAMPLE=(()=>{ const pts=[],prs=[],ts=[];
