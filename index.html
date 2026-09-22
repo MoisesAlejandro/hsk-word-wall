@@ -416,16 +416,45 @@
   #galbig svg{border-color:var(--guide)}
   #fwmodel{color:var(--outline)}
   .pinfo{display:none}
-  @media (min-width:900px) and (orientation:landscape){
+  /* Landscape on a tablet with room to work: writing grid on the right, everything you
+     act on - character picker, modes, free-write bar, saved attempts - in one column on
+     the left, sized so the screen never scrolls. Below 600px of height (phone landscape,
+     or the keyboard open) this does not apply and the pinned-bar layout above takes over. */
+  @media (min-width:900px) and (orientation:landscape) and (min-height:600px){
+    #prac{overflow:hidden}
     .prac-in{
-      max-width:1040px; display:grid; gap:0 28px; align-items:start;
-      grid-template-columns:minmax(320px,540px) 1fr;
-      grid-template-areas:"top top" "grid chars" "grid quiz" "grid stat" "grid reps" "modes gal" "hint gal" "fw gal";
+      max-width:1180px; height:100dvh; display:grid; gap:0 26px; align-items:start;
+      grid-template-columns:minmax(300px,1fr) minmax(320px,560px);
+      grid-template-rows:auto auto auto auto auto auto auto 1fr;
+      grid-template-areas:
+        "top   top"
+        "chars grid"
+        "quiz  grid"
+        "stat  grid"
+        "reps  grid"
+        "modes grid"
+        "fw    grid"
+        "gal   grid";
+      padding:10px 16px calc(12px + var(--sab));
     }
-    .prac-top{grid-area:top} .tian{grid-area:grid} .modes{grid-area:modes} .phint1{grid-area:hint}
+    .prac-top{grid-area:top} .tian{grid-area:grid; justify-self:end}
     #pchars{grid-area:chars} #pquiz{grid-area:quiz} .pstat{grid-area:stat} .repsbox{grid-area:reps}
-    .fwbar{grid-area:fw} .gal{grid-area:gal}
-    .tian{width:min(540px, calc(100dvh - 120px))}
+    .modes{grid-area:modes} .fwbar{grid-area:fw} .gal{grid-area:gal}
+    /* the two bars rejoin the flow here - nothing is below the fold to pin them against */
+    .modes{
+      position:static; margin:6px 0 0; padding:0; background:none; border-top:0;
+      justify-content:flex-start;
+    }
+    .fwbar.on{
+      position:static; margin:8px 0 0; padding:0; background:none; border-top:0;
+      justify-content:flex-start;
+    }
+    /* free-write bar sits with the gallery it acts on, both inside the scroll-free column */
+    .gal{display:none; min-height:0; overflow:auto; margin-top:10px; align-self:stretch}
+    .gal.on{display:flex; flex-direction:column}
+    .galgrid{margin-top:6px}
+    .phint1{display:none}
+    .tian{width:min(560px, calc(100dvh - 130px))}
   }
   /* E. touch + feedback */
   .seg button{min-height:44px; padding:8px 14px}
@@ -748,8 +777,9 @@ const DATA = [{"w":"上","l":1,"p":"shàng","d":["on top","upon","above","upper"
 <script src="strokes-data.js"></script>
 <script src="examples.js"></script>
 <script>
-const APP_VERSION = '1.18.1';
+const APP_VERSION = '1.19.0';
 const CHANGELOG = [
+  {v:'1.19.0', d:'2026-09-21', n:['Tablet landscape practice screen rebuilt: the writing grid moves to the right and the character picker, mode buttons, free-write bar and your saved attempts all sit together down the left','Nothing scrolls in landscape any more \u2014 the saved-attempt gallery grows to fill the space instead']},
   {v:'1.18.1', d:'2026-09-21', n:['Fixed practice controls falling below the fold on a tablet in landscape: the mode buttons and the free-write bar (Undo, Clear, Save & next) now stay pinned to the bottom of the screen, clear of the gesture bar, while only the writing area and gallery scroll','The word and Close button stay pinned at the top of the practice screen too, so a short screen or an open keyboard cannot push them away']},
   {v:'1.18.0', d:'2026-09-16', n:['New app icon: the \u6c49 of \u6c49\u5b57\u7ec3\u4e60, replacing the \u8bcd left over from the old \u8bcd\u6c47\u5899 name','Matching splash screen on Android']},
   {v:'1.17.1', d:'2026-09-16', n:['Android: the title no longer sits under the status bar clock on edge-to-edge devices']},

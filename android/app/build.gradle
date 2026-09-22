@@ -20,7 +20,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // versionCode must increase for every Play upload; versionName tracks APP_VERSION in index.html
         versionCode 3
-        versionName "1.18.0"
+        versionName "1.19.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
